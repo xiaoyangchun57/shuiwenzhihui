@@ -99,6 +99,20 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#030e1f;o
 .ditem .ds{color:#5ea8c8;font-size:12px}
 .ditem .dv{font-family:monospace;font-size:15px;color:#00e0c0;flex-shrink:0;text-align:right}
 
+/* 告警指标卡 */
+.al-mcard{flex:1;min-width:90px;padding:8px 12px;border-radius:3px;border:1px solid rgba(0,200,180,0.1);background:rgba(0,200,180,0.03);text-align:center}
+.al-mcard .mc-val{font-size:20px;font-weight:500;font-family:monospace;line-height:1.3}
+.al-mcard .mc-lbl{font-size:11px;color:#5ea8c8;margin-top:2px}
+.al-mcard.c-red{border-color:rgba(255,71,96,0.25);background:rgba(255,71,96,0.06)}
+.al-mcard.c-red .mc-val{color:#ff4760}
+.al-mcard.c-org{border-color:rgba(255,160,64,0.25);background:rgba(255,160,64,0.06)}
+.al-mcard.c-org .mc-val{color:#ffa040}
+.al-mcard.c-ylw{border-color:rgba(255,215,0,0.2);background:rgba(255,215,0,0.05)}
+.al-mcard.c-ylw .mc-val{color:#ffd000}
+.al-mcard.c-grn{border-color:rgba(0,224,128,0.2);background:rgba(0,224,128,0.05)}
+.al-mcard.c-grn .mc-val{color:#2ea080}
+.al-mcard.c-cyan .mc-val{color:#00e0c0}
+
 /* 预警条目 */
 .alert-item{display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid rgba(0,200,180,0.05);font-size:13px}
 .alert-item:last-child{border-bottom:none}
@@ -108,6 +122,17 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#030e1f;o
 .alert-lv.ylw{background:rgba(255,215,0,0.15);color:#ffd000;border:1px solid rgba(255,215,0,0.2)}
 .alert-msg{color:#d0e8ff;flex:1;line-height:1.5}
 .alert-tm{color:#5ea8c8;font-size:12px;flex-shrink:0}
+
+/* Toast 浮动提示 */
+.toast-container{position:fixed;top:60px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:10px 18px;border-radius:4px;font-size:13px;color:#fff;min-width:200px;max-width:360px;box-shadow:0 4px 20px rgba(0,0,0,0.3);animation:toastIn .3s ease-out;pointer-events:auto;border:1px solid rgba(255,255,255,0.1)}
+.toast.success{background:rgba(0,180,80,0.92);border-color:rgba(0,224,128,0.3)}
+.toast.error{background:rgba(200,50,50,0.92);border-color:rgba(255,71,96,0.3)}
+.toast.warning{background:rgba(200,140,0,0.92);border-color:rgba(255,160,64,0.3)}
+.toast.info{background:rgba(0,120,180,0.92);border-color:rgba(0,200,220,0.3)}
+.toast.fade{opacity:0;transition:opacity .4s}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
 .chart-mini{width:100%;height:150px}
 
 /* 大数字卡片（参考图风格） */
@@ -216,6 +241,7 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#030e1f;o
 .form-row{margin-bottom:8px}
 .form-row label{display:block;font-size:13px;color:#5ea8c8;margin-bottom:3px}
 .form-row input,.form-row select,.form-row textarea{width:100%;padding:6px 10px;background:rgba(0,20,50,.8);border:1px solid rgba(0,200,180,0.12);border-radius:2px;color:#d0e8ff;font-size:13px}
+.form-row input[type=date]{min-height:34px;color-scheme:dark}
 .form-row textarea{min-height:60px;resize:vertical}
 .form-row input:focus{outline:0;border-color:#00e0c0}
 .stat-pills{display:flex;gap:4px;margin-bottom:8px}
@@ -344,7 +370,7 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#030e1f;o
     <!-- 站点 -->
     <div class="tab-panel" id="panel-sites"><div class="mgmt"><div class="card"><div class="card-hd"><span class="arr">&#187;&#187;&#187;</span>站点列表</div><div class="filter-bar"><input class="fi" placeholder="搜索名称/编码..." oninput="filterTable('st-body',this.value,1);filterTable('st-body',this.value,0)" style="flex:1"><select class="fi-s" onchange="filterEq('st-body',2,this.value)"><option value="">全部类型</option><option value="雨量站">雨量站</option><option value="水位站">水位站</option><option value="水文站">水文站</option><option value="墒情站">墒情站</option><option value="蒸发站">蒸发站</option></select></div><table><thead><tr><th onclick="sortTable('st-body',0)">编码 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('st-body',1)">名称 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('st-body',2)">类型 <span class="srt">&#9650;&#9660;</span></th><th>状态</th><th onclick="sortTable('st-body',4)">设备 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('st-body',5)">负责人 <span class="srt">&#9650;&#9660;</span></th></tr></thead><tbody id="st-body"></tbody></table></div></div></div>
     <!-- 预警 -->
-    <div class="tab-panel" id="panel-alerts"><div class="mgmt"><div class="card"><div class="card-hd"><span class="arr">&#187;&#187;&#187;</span>预警管理 <span style="font-size:13px;color:#5ea8c8" id="al-stat"></span></div><div class="filter-bar"><input class="fi" placeholder="搜索站点/信息..." oninput="filterTable('al-body',this.value,2);filterTable('al-body',this.value,5)" style="flex:1"><select class="fi-s" onchange="filterEq('al-body',1,this.value)"><option value="">全部级别</option><option value="红色">红色</option><option value="橙色">橙色</option><option value="黄色">黄色</option></select><select class="fi-s" onchange="filterEq('al-body',6,this.value)"><option value="">全部状态</option><option value="待处理">待处理</option><option value="已确认">已确认</option><option value="已办结">已办结</option></select><div class="batch-bar" id="al-batch" style="display:none;gap:6px"><span style="color:#5ea8c8;font-size:11px" id="al-sel-cnt">已选0项</span><button class="btn btn-success btn-xs" onclick="batchAl('acknowledge')">批量确认</button><button class="btn btn-warning btn-xs" onclick="batchAl('urge')">批量督办</button><button class="btn btn-primary btn-xs" onclick="batchAl('convert')">批量转工单</button><button class="btn btn-xs" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="clrAlSel()">取消选择</button></div></div><table><thead><tr><th style="width:28px"><input type="checkbox" onchange="alSelAll(this.checked)" id="al-cb-all"></th><th onclick="sortTable('al-body',1)">级别 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('al-body',2)">站点 <span class="srt">&#9650;&#9660;</span></th><th>指标</th><th onclick="sortTable('al-body',4)">值 <span class="srt">&#9650;&#9660;</span></th><th>信息</th><th onclick="sortTable('al-body',6)">状态 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('al-body',7)">时间 <span class="srt">&#9650;&#9660;</span></th><th>操作</th></tr></thead><tbody id="al-body"></tbody></table></div></div></div>
+    <div class="tab-panel" id="panel-alerts"><div class="mgmt"><div class="card"><div class="card-hd"><span class="arr">&#187;&#187;&#187;</span>预警管理 <span style="font-size:13px;color:#5ea8c8" id="al-stat"></span></div><div style="display:flex;gap:8px;padding:8px 12px 0"><div class="al-metrics" id="al-metrics" style="display:flex;gap:8px;flex:1;flex-wrap:wrap"></div><div style="width:130px;height:80px;flex-shrink:0"><canvas id="al-chart" role="img" aria-label="告警级别分布图"></canvas></div></div><div class="filter-bar"><input class="fi" placeholder="搜索站点/信息..." oninput="filterTable('al-body',this.value,2);filterTable('al-body',this.value,5)" style="flex:1"><select class="fi-s" id="al-flt-level" onchange="ldAl()"><option value="">全部级别</option><option value="红色">红色</option><option value="橙色">橙色</option><option value="黄色">黄色</option></select><select class="fi-s" id="al-flt-status" onchange="ldAl()"><option value="pending">待处理</option><option value="">全部状态</option><option value="acknowledged">已确认</option><option value="resolved">已办结</option></select><select class="fi-s" id="al-flt-date" onchange="ldAl()"><option value="">全部时间</option><option value="today">今天</option><option value="week">本周</option><option value="month">本月</option></select><div class="batch-bar" id="al-batch" style="display:none;gap:6px"><span style="color:#5ea8c8;font-size:11px" id="al-sel-cnt">已选0项</span><button class="btn btn-success btn-xs" onclick="batchResolve()">批量办结</button><button class="btn btn-warning btn-xs" onclick="batchAl('urge')">批量督办</button><button class="btn btn-primary btn-xs" onclick="batchAl('convert')">批量转工单</button><button class="btn btn-xs" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="clrAlSel()">取消选择</button></div></div><table><thead><tr><th style="width:28px"><input type="checkbox" onchange="alSelAll(this.checked)" id="al-cb-all"></th><th onclick="sortTable('al-body',1)">级别 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('al-body',2)">站点 <span class="srt">&#9650;&#9660;</span></th><th>指标</th><th onclick="sortTable('al-body',4)">值 <span class="srt">&#9650;&#9660;</span></th><th>信息</th><th onclick="sortTable('al-body',6)">状态 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('al-body',7)">时间 <span class="srt">&#9650;&#9660;</span></th><th>操作</th></tr></thead><tbody id="al-body"></tbody></table></div></div></div>
     <!-- 工单 -->
     <div class="tab-panel" id="panel-workorders"><div class="mgmt"><div class="card"><div class="card-hd"><span class="arr">&#187;&#187;&#187;</span>工单管理 <button class="btn btn-primary btn-sm" onclick="mNew('order')">+新建</button></div><div class="filter-bar"><input class="fi" placeholder="搜索工单号/标题..." oninput="filterTable('or-body',this.value,0);filterTable('or-body',this.value,4)" style="flex:1"><select class="fi-s" onchange="filterEq('or-body',3,this.value)"><option value="">全部级别</option><option value="一般">一般</option><option value="紧急">紧急</option><option value="重大">重大</option></select><select class="fi-s" onchange="filterEq('or-body',5,this.value)"><option value="">全部状态</option><option value="待受理">待受理</option><option value="已受理">已受理</option><option value="已生成">已生成</option><option value="处置中">处置中</option><option value="已关闭">已关闭</option></select></div><table><thead><tr><th onclick="sortTable('or-body',0)">工单号 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('or-body',1)">站点 <span class="srt">&#9650;&#9660;</span></th><th>来源</th><th onclick="sortTable('or-body',3)">级别 <span class="srt">&#9650;&#9660;</span></th><th>标题</th><th onclick="sortTable('or-body',5)">状态 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('or-body',6)">负责人 <span class="srt">&#9650;&#9660;</span></th><th onclick="sortTable('or-body',7)">SLA <span class="srt">&#9650;&#9660;</span></th><th>操作</th></tr></thead><tbody id="or-body"></tbody></table></div></div></div>
     <!-- 运维管理 -->
@@ -387,6 +413,8 @@ function toggleNavDD(){document.getElementById('nav-dd-menu').classList.toggle('
 function switchNavDD(t){document.getElementById('nav-dd-menu').classList.remove('show');switchNav(t)}
 // 运维管理子标签切换
 // switchMpSub已删除（巡检管理已移除）
+// 点击遮罩层关闭弹窗
+document.addEventListener('click',function(e){const m=e.target.closest('.modal-overlay');if(m&&m===e.target)m.remove()});
 // 点击外部关闭下拉
 document.addEventListener('click',function(e){const dd=document.getElementById('nav-more');if(dd&&!dd.contains(e.target)){const m=document.getElementById('nav-dd-menu');if(m)m.classList.remove('show')}});
 function togglePane(s){const p=document.getElementById('panel-'+s);const h=p.classList.toggle('hidden');const btn=p.parentElement.querySelector('.btn-show-'+s);if(btn)btn.textContent=h?'展开面板':'隐藏面板';if(!h&&s==='right')setTimeout(cockpitLoad,100)}
@@ -459,20 +487,20 @@ async function cockpitLoad(){
   _updateBreathe(p);
   document.getElementById('ns-alerts').textContent=p.length;document.getElementById('ns-alerts').className=p.length?'nsn danger':'nsn';
   document.getElementById('alert-badge').textContent=p.length?p.length+'条':'';
-  document.getElementById('alert-feed').innerHTML=p.length?p.slice(0,8).map(x=>{const lt=x.level==='red'?'异常':x.level==='orange'?'待确认':'待确认';const lc=x.level==='red'?'#ff4760':x.level==='orange'?'#ffa040':'#ffa040';return `<div class="alert-item" style="cursor:pointer" onclick="showAlertDetail(${x.id})"><span style="color:${lc};font-weight:500;font-size:12px">${lt}</span><span class="alert-msg">${x.site_name}:${x.message}</span><span class="alert-tm">${(x.created_at||'').substring(11,16)}</span></div>`}).join(''):'<span style="color:#5ea8c8">系统运行正常，无告警</span>';
+  document.getElementById('alert-feed').innerHTML=p.length?p.slice(0,8).map(x=>{const lt=x.level==='red'?'异常':'待确认';const lc=x.level==='red'?'#ff4760':x.level==='orange'?'#ffa040':'#ffd000';return `<div class="alert-item" style="cursor:pointer" onclick="showAlertDetail(${x.id})"><span style="color:${lc};font-weight:500;font-size:12px">${lt}</span><span class="alert-msg">${x.site_name}:${x.message}</span><span class="alert-tm">${(x.created_at||'').substring(11,16)}</span></div>`}).join(''):'<span style="color:#5ea8c8">系统运行正常，无告警</span>';
   document.getElementById('bt-tick').textContent=p.map(x=>`[${x.level==='red'?'红':x.level==='orange'?'橙':x.level==='yellow'?'黄':'蓝'}]${x.site_name}:${x.message}`).join('｜')||'系统运行正常';
   // 降雨
   _loadRainfall()
   // 数据到报率
   const ar=await af('/data/arrival/summary');
-  if(ar){const mt=ar.by_metric||[];document.getElementById('arrival-feed').innerHTML=`<div style="margin-bottom:4px"><span style="font-size:22px;font-weight:500;color:${ar.total_avg>=98?'#2ea080':'#ff4760'}">${ar.total_avg}<span style="font-size:12px;color:#5ea8c8">%</span></span><span style="font-size:12px;color:#5ea8c8;margin-left:6px">总到报率</span></div>${mt.map(m=>`<div style="display:flex;align-items:center;gap:4px;padding:2px 0;font-size:12px"><span style="width:50px;color:#5ea8c8">${METRIC_CN[m.metric]||m.metric}</span><div style="flex:1;height:12px;background:rgba(0,200,180,0.06);border-radius:6px"><div style="height:100%;width:${m.avg_rate||0}%;background:${(m.avg_rate||0)>=98?'#2ea080':'#ffa040'};border-radius:6px"></div></div><span style="width:40px;text-align:right;color:${(m.avg_rate||0)>=98?'#2ea080':'#ff4760'};font-family:monospace">${(m.avg_rate||0).toFixed(1)}%</span></div>`).join('')||'<span style="color:#4a8aaa;font-size:12px">加载中...</span>'}`;const below=mt.filter(m=>(m.avg_rate||0)<98).length;if(below)document.getElementById('arrival-feed').innerHTML+=`<div style="font-size:11px;color:#ff4760;padding:2px 0">${below}项未达标(&lt;98%)</div>`}  // 水位监测列表（复用已有数据）
+  if(ar){const mt=ar.by_metric||[];document.getElementById('arrival-feed').innerHTML=`<div style="margin-bottom:4px;cursor:pointer" onclick="_showArrivalDetail()"><span style="font-size:22px;font-weight:500;color:${ar.total_avg>=98?'#2ea080':'#ff4760'}">${ar.total_avg}<span style="font-size:12px;color:#5ea8c8">%</span></span><span style="font-size:12px;color:#5ea8c8;margin-left:6px">总到报率</span></div>${mt.map(m=>`<div style="display:flex;align-items:center;gap:4px;padding:2px 0;font-size:12px;cursor:pointer" onclick="_showArrivalDetail()"><span style="width:50px;color:#5ea8c8">${METRIC_CN[m.metric]||m.metric}</span><div style="flex:1;height:12px;background:rgba(0,200,180,0.06);border-radius:6px"><div style="height:100%;width:${m.avg_rate||0}%;background:${(m.avg_rate||0)>=98?'#2ea080':'#ffa040'};border-radius:6px"></div></div><span style="width:40px;text-align:right;color:${(m.avg_rate||0)>=98?'#2ea080':'#ff4760'};font-family:monospace">${(m.avg_rate||0).toFixed(1)}%</span></div>`).join('')||'<span style="color:#4a8aaa;font-size:12px;cursor:pointer" onclick="_showArrivalDetail()">加载中...</span>'}`;const below=mt.filter(m=>(m.avg_rate||0)<98).length;if(below)document.getElementById('arrival-feed').innerHTML+=`<div style="font-size:11px;color:#ff4760;padding:2px 0;cursor:pointer" onclick="_showArrivalDetail()">${below}项未达标(&lt;98%) &#8594;</div>`}  // 水位监测列表（复用已有数据）
   const wlData=s;
   if(!wlData)console.warn('[Cockpit] wl复用数据为null');
   if(wlData){const alerts=await af('/alerts?limit=50');const wlAlertIds={};(alerts||[]).filter(function(a){return a.status==='pending'}).forEach(function(a){wlAlertIds[a.site_id]=a});
     const wl=wlData.filter(function(d){return d.type==='water_level'||d.type==='hydrology'}).sort(function(a,b){return(wlAlertIds[b.id]?1:0)-(wlAlertIds[a.id]?1:0)});
     document.getElementById('wl-count').textContent=wl.length+'站';
     document.getElementById('wl-feed').innerHTML='<div style="display:flex;align-items:center;padding:4px 0;margin-bottom:2px;border-bottom:1px solid rgba(0,200,180,0.12)"><span style="flex:1;font-size:11px;color:#4a8aaa">名称</span><span style="width:55px;text-align:right;font-size:11px;color:#4a8aaa">当前水位</span><span style="width:55px;text-align:right;font-size:11px;color:#ffa040">警戒水位</span><span style="width:65px;text-align:right;font-size:11px;color:#4a8aaa">采集时间</span></div>'+
-    wl.slice(0,30).map(function(s){const cur=s.latest_value;const tm=s.recorded_at||s.latest_time||'';const tmStr=tm?tm.substring(11,19):'--';const fl=s.type==='hydrology'?20.0:15.0;const isAb=wlAlertIds[s.id]||(cur&&cur>fl);const abClr=isAb?'#ff4760':'#00e0c0';return '<div style="display:flex;align-items:center;padding:3px 0;border-bottom:1px solid rgba(0,200,180,0.04);'+(isAb?'background:rgba(255,71,96,0.04)':'')+'"><span style="flex:1;font-size:12px;color:#d0e8ff">'+s.name+'</span><span style="width:55px;text-align:right;color:'+abClr+';font-weight:500;font-size:13px">'+(cur!==null&&cur!==undefined?Number(cur).toFixed(2):'--')+'<span style="font-size:9px;color:#5ea8c8">m</span></span><span style="width:55px;text-align:right;color:#ffa040;font-size:12px">'+fl.toFixed(1)+'m</span><span style="width:65px;text-align:right;color:#5ea8c8;font-size:10px">'+tmStr+'</span></div>'}).join('')
+    wl.slice(0,30).map(function(s){const cur=s.latest_value;const tm=s.recorded_at||s.latest_time||'';const tmStr=tm?tm.substring(11,19):'--';const fl=s.type==='hydrology'?20.0:15.0;const isAb=wlAlertIds[s.id]||(cur&&cur>fl);const abClr=isAb?'#ff4760':'#00e0c0';return '<div style="display:flex;align-items:center;padding:3px 0;border-bottom:1px solid rgba(0,200,180,0.04);cursor:pointer;'+(isAb?'background:rgba(255,71,96,0.04)':'')+'" onclick="gotoSite('+s.id+')"><span style="flex:1;font-size:12px;color:#d0e8ff">'+s.name+'</span><span style="width:55px;text-align:right;color:'+abClr+';font-weight:500;font-size:13px">'+(cur!==null&&cur!==undefined?Number(cur).toFixed(2):'--')+'<span style="font-size:9px;color:#5ea8c8">m</span></span><span style="width:55px;text-align:right;color:#ffa040;font-size:12px">'+fl.toFixed(1)+'m</span><span style="width:65px;text-align:right;color:#5ea8c8;font-size:10px">'+tmStr+'</span></div>'}).join('')
   }  const o=await af('/workorders/statistics');
   if(o){const keys=['pending','accepted','generated','dispatched','in_progress','reviewing','acceptance','closed'];const cn=['待受理','已受理','已生成','已派发','处置中','审核中','验收中','已关闭'];const cls=['#4a8aaa','#00e0c0','#7c5ce7','#ffa040','#2ea080','#00e0c0','#ffa040','#4a8aaa'];const vals=keys.map(k=>o.by_status?.[k]||0);const totalOrders=vals.reduce((a,b)=>a+b,0);const woBadge=document.getElementById('wo-stat-badge');if(woBadge)woBadge.textContent='共'+totalOrders+'单';const maxV=Math.max(...vals,1);const cx=document.getElementById('chart-wo');if(cx){cx.style.display='none';const pr=cx.parentElement;const woHtml=!vals.some(v=>v>0)?'<div style="color:#4a8aaa;text-align:center;padding:20px 0;font-size:13px">暂无工单数据</div>':vals.map(function(v,i){return '<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px"><span style="width:48px;color:#b0d4ef;text-align:right;font-size:12px">'+cn[i]+'</span><div style="flex:1;height:16px;background:rgba(0,200,180,0.06);border-radius:8px;overflow:hidden"><div style="height:100%;width:'+(v/maxV*100)+'%;background:'+cls[i]+';border-radius:8px;transition:width .5s"></div></div><span style="width:24px;color:#d0e8ff;font-family:monospace;font-size:13px">'+v+'</span></div>'}).join('');pr.innerHTML=woHtml}}
   document.getElementById('bt-time').textContent=new Date().toLocaleTimeString('zh-CN',{hour12:false});
@@ -527,6 +555,12 @@ function _updateBreathe(pendingAlerts){
     ico.className='marker-breathe'+(lv?' '+lv:'');
   });
 }
+// 数据到报率详情弹窗
+function _showArrivalDetail(){
+  const ov=document.createElement('div');ov.className='modal-overlay';
+  ov.innerHTML='<div class="modal" style="max-width:450px"><h4>数据到报率说明</h4><div style="font-size:12px;color:#b0d4ef;line-height:1.8;padding:8px"><p>到报率 = 已收到数据次数 / 应收到数据次数 &times; 100%</p><p>达标标准：水文/水位/面雨量站 &ge; 98%，其他站点 &ge; 95%</p><p>低于标准时系统将自动告警并生成工单，纳入运维考核。</p></div><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest(\'.modal-overlay\').remove()">关闭</button></div>';
+  document.body.appendChild(ov);
+}
 // 降雨热力图（模拟区域分布）
 function _drawRainHeat(){
   const cv=document.getElementById('chart-rain-heat');if(!cv)return;
@@ -571,43 +605,234 @@ function _drawRainFc(fc){
 async function ldSt(){const d=await af('/sites');if(!d)return;const sorted=[...d].sort((a,b)=>{const aOff=(b.offline_count||0)+((b.status==='offline')?1:0);const bOff=(a.offline_count||0)+((a.status==='offline')?1:0);return aOff-bOff});document.getElementById('st-body').innerHTML=sorted.map(s=>{const off=s.offline_count||0;const isAb=off>0||s.status==='offline';const st=isAb?'badge-org':'badge-grn';const stT=isAb?(off?off+'台离线':'离线'):'正常';return `<tr style="cursor:pointer" onclick="showSite(${s.id})"><td>${s.code}</td><td>${s.name}</td><td>${TM[s.type]||s.type}</td><td><span class="badge ${st}">${stT}</span></td><td>${s.device_count||0}</td><td>${s.manager}</td></tr>`}).join('')}
 
 async function showSite(id){const d=await af('/sites/'+id);if(!d)return;const devs=d.devices||[];const ov=document.createElement('div');ov.className='modal-overlay';
-const devHtml=devs.map(x=>`<tr><td>${x.device_code}</td><td>${x.device_name}</td><td>${DT[x.device_type]||x.device_type}</td><td><span class="badge ${x.status==='online'?'badge-grn':'badge-org'}">${x.status==='online'?'在线':'离线'}</span></td><td>${x.battery||'-'}%</td><td>${x.last_data_time||'-'}</td></tr>`).join('');
-ov.innerHTML=`<div class="modal" style="max-width:700px"><h4>&#187;&#187;&#187; ${d.name} (${d.code})</h4><div style="font-size:11px;margin-bottom:8px">类型: ${TM[d.type]||d.type} | 负责人: ${d.manager} | 电话: ${d.phone} | <span style="color:#ff4760">告警: ${d.active_alerts||0}</span> | <span style="color:#ffa040">工单: ${d.open_orders||0}</span></div>
+const devHtml=devs.map(x=>`<tr><td>${x.device_code}</td><td>${x.device_name}</td><td>${DT[x.device_type]||x.device_type}</td><td><span class="badge ${x.status==='online'?'badge-grn':'badge-org'}">${x.status==='online'?'在线':'离线'}</span></td><td>${x.battery||'-'}%</td><td>${x.last_data_time||'-'}</td>${x.status==='offline'?`<td><button class="btn btn-warning btn-xs" onclick="event.stopPropagation();qckOrder(${id},'${x.device_name}')">异常处理</button></td>`:'<td></td>'}</tr>`).join('');
+ov.innerHTML=`<div class="modal" style="max-width:750px"><h4>&#187;&#187;&#187; ${d.name} (${d.code})</h4><div style="font-size:11px;margin-bottom:8px">类型: ${TM[d.type]||d.type} | 负责人: ${d.manager} | 电话: ${d.phone} | <span style="color:#ff4760">告警: ${d.active_alerts||0}</span> | <span style="color:#ffa040">工单: ${d.open_orders||0}</span></div>
 <h5 style="color:#00e0c0;font-size:12px;margin:8px 0 4px">设备清单</h5>
-<table><thead><tr><th>设备编码</th><th>名称</th><th>类型</th><th>状态</th><th>电量</th><th>最后数据</th></tr></thead><tbody>${devHtml||'<tr><td colspan="6" style="color:#4a8aaa">暂无设备</td></tr>'}</tbody></table>
+<table><thead><tr><th>设备编码</th><th>名称</th><th>类型</th><th>状态</th><th>电量</th><th>最后数据</th><th>操作</th></tr></thead><tbody>${devHtml||'<tr><td colspan="7" style="color:#4a8aaa">暂无设备</td></tr>'}</tbody></table>
 <button class="btn btn-sm" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15);margin-top:10px" onclick="this.closest('.modal-overlay').remove()">关闭</button></div>`;
 document.body.appendChild(ov)}
-async function ldAl(){const d=await af('/alerts?limit=100');if(!d)return;const p=d.filter(x=>x.status==='pending');document.getElementById('al-stat').textContent=`待处理 ${p.length} | 共 ${d.length}`;const sorted=[...d].sort((a,b)=>{if(a.status!=='pending'&&b.status==='pending')return 1;if(a.status==='pending'&&b.status!=='pending')return -1;const o={red:3,orange:2,yellow:1};return (o[b.level]||0)-(o[a.level]||0)});document.getElementById('al-body').innerHTML=sorted.map(a=>{const lt=a.level==='red'?'红色':a.level==='orange'?'橙色':a.level==='yellow'?'黄色':'蓝色';const lc=a.level==='red'?'#ff4760':a.level==='orange'?'#ffa040':a.level==='yellow'?'#ffa040':'#5ea8c8';const st=a.status==='pending'?'待处理':a.status==='acknowledged'?'已确认':'已办结';const sc=a.status==='pending'?'#ffa040':a.status==='acknowledged'?'#5ea8c8':'#2ea080';const urgeHtml=a.urge_count?`<span style="color:#ffa040;font-size:10px;margin-left:4px">督办${a.urge_count}次</span>`:'';return `<tr data-id="${a.id}"><td><input type="checkbox" class="al-cb" value="${a.id}" onchange="alUpdCnt()"></td><td data-level="${a.level}"><span style="color:${lc};font-weight:500">${lt}</span></td><td>${a.site_name}</td><td>${MT[a.metric]||a.metric}</td><td>${a.value}</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.message}</td><td><span class="al-status-text" data-status="${a.status}" style="color:${sc}">${st}</span>${urgeHtml}</td><td>${a.created_at}</td><td style="white-space:nowrap">${a.status==='pending'?`<button class="btn btn-success btn-xs" onclick="ack(${a.id})">确认</button><button class="btn btn-warning btn-xs" onclick="alUrge(${a.id})">督办</button><button class="btn btn-primary btn-xs" onclick="alConvert(${a.id})">转工单</button>`:a.status==='acknowledged'?`<button class="btn btn-success btn-xs" onclick="resolve(${a.id})">办结</button><button class="btn btn-xs" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="showAlertTimeline(${a.id})">时间线</button>`:`<button class="btn btn-xs" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="showAlertTimeline(${a.id})">时间线</button>`}</td></tr>`}).join('')}
+// 设备异常快速转工单（防重复点击+按钮禁用）
+let _qckBusy=false;
+// 告警操作防重复锁
+let _alBusy=false;
+async function qckOrder(siteId,devName){
+  if(_qckBusy){showToast('操作进行中，请稍候...','warning');return}
+  _qckBusy=true;
+  const btn=event&&event.target;if(btn){btn.disabled=true;btn.textContent='提交中...'}
+  const r=await afP('/workorders',{site_id:siteId,source:'auto',event_type:'设备异常',level:'urgent',title:'设备离线-'+devName,description:'设备离线异常，需尽快排查处理'});
+  _qckBusy=false;
+  if(btn){btn.disabled=false;btn.textContent='异常处理'}
+  if(r&&r.success){showToast('工单 '+r.order_no+' 创建成功');ldOr()}
+}
+async function ldAl(){
+  const status=document.getElementById('al-flt-status').value;
+  const level=document.getElementById('al-flt-level').value;
+  const dateRange=document.getElementById('al-flt-date').value;
+  const now=new Date();
+  let date_from='',date_to='';
+  if(dateRange==='today'){
+    date_from=now.getFullYear()+'-'+(now.getMonth()+1).toString().padStart(2,'0')+'-'+now.getDate().toString().padStart(2,'0');
+  }else if(dateRange==='week'){
+    const day=now.getDay()||7;const monday=new Date(now);monday.setDate(now.getDate()-day+1);
+    date_from=monday.getFullYear()+'-'+(monday.getMonth()+1).toString().padStart(2,'0')+'-'+monday.getDate().toString().padStart(2,'0');
+  }else if(dateRange==='month'){
+    date_from=now.getFullYear()+'-'+(now.getMonth()+1).toString().padStart(2,'0')+'-01';
+  }
+  let url='/alerts?limit=200';
+  if(status)url+='&status='+status;
+  if(date_from)url+='&date_from='+date_from;
+  if(date_to)url+='&date_to='+date_to;
+  const d=await af(url);if(!d)return;
+  const p=d.filter(x=>x.status==='pending');
+  document.getElementById('al-stat').textContent='待处理 '+p.length+' | 共 '+d.length;
+  // 级别客户端过滤（用data-level属性比较）
+  let filtered=d;
+  if(level){
+    const lvMap={红色:'red',橙色:'orange',黄色:'yellow'};
+    filtered=d.filter(x=>x.level===lvMap[level]);
+  }
+  const sorted=[...filtered].sort((a,b)=>{if(a.status!=='pending'&&b.status==='pending')return 1;if(a.status==='pending'&&b.status!=='pending')return -1;const o={red:3,orange:2,yellow:1};return (o[b.level]||0)-(o[a.level]||0)});
+  document.getElementById('al-body').innerHTML=sorted.map(a=>{const lt=a.level==='red'?'红色':a.level==='orange'?'橙色':a.level==='yellow'?'黄色':'蓝色';const lc=a.level==='red'?'#ff4760':a.level==='orange'?'#ffa040':a.level==='yellow'?'#ffd000':'#5ea8c8';const st=a.status==='pending'?'待处理':a.status==='acknowledged'?'已确认':'已办结';const sc=a.status==='pending'?'#ffa040':a.status==='acknowledged'?'#5ea8c8':'#2ea080';const urgeHtml=a.urge_count?`<span style="color:#ffa040;font-size:10px;margin-left:4px">督办${a.urge_count}次</span>`:'';return `<tr data-id="${a.id}"><td><input type="checkbox" class="al-cb" value="${a.id}" onchange="alUpdCnt()"></td><td data-level="${a.level}"><span style="color:${lc};font-weight:500">${lt}</span></td><td>${a.site_name}</td><td>${MT[a.metric]||a.metric}</td><td>${a.value}</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.message}</td><td><span class="al-status-text" data-status="${a.status}" style="color:${sc}">${st}</span>${urgeHtml}</td><td>${a.created_at}</td><td style="white-space:nowrap">${a.status==='pending'?`<button class="btn btn-success btn-xs" onclick="alertResolve(${a.id})">办结</button><button class="btn btn-primary btn-xs" onclick="alConvert(${a.id})">转工单</button><button class="btn btn-warning btn-xs" onclick="alUrge(${a.id})">督办</button>`:a.status==='acknowledged'?`<button class="btn btn-success btn-xs" onclick="alertResolve(${a.id})">办结</button><button class="btn btn-xs" style="color:#ffa040;border:1px solid rgba(255,160,64,0.2)" onclick="undoAck(${a.id})">撤销确认</button><button class="btn btn-xs" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="showAlertTimeline(${a.id})">时间线</button>`:`<button class="btn btn-xs" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="showAlertTimeline(${a.id})">时间线</button>`}</td></tr>`}).join('')
+  // 刷新顶部指标卡
+  renderAlertMetrics()
+}
+
+// 告警指标卡渲染
+async function renderAlertMetrics(){
+  const el=document.getElementById('al-metrics');if(!el)return;
+  try{
+    // 待处理告警的统计数据
+    const s=await af('/alerts/statistics?status=pending');
+    if(!s)return;
+    el.innerHTML=
+      '<div class="al-mcard"><div class="mc-val" style="color:#ffa040">'+(s.total||0)+'</div><div class="mc-lbl">待处理</div></div>'+
+      '<div class="al-mcard c-red"><div class="mc-val">'+(s.by_level.red||0)+'</div><div class="mc-lbl">红色</div></div>'+
+      '<div class="al-mcard c-org"><div class="mc-val">'+(s.by_level.orange||0)+'</div><div class="mc-lbl">橙色</div></div>'+
+      '<div class="al-mcard c-ylw"><div class="mc-val">'+(s.by_level.yellow||0)+'</div><div class="mc-lbl">黄色</div></div>';
+    // 环形图也基于待处理数据
+    const cv=document.getElementById('al-chart');if(!cv)return;
+    if(window._alChart)window._alChart.destroy();
+    if(typeof Chart==='undefined')return;
+    window._alChart=new Chart(cv,{
+      type:'doughnut',
+      data:{
+        labels:['红色','橙色','黄色'],
+        datasets:[{data:[s.by_level.red||0,s.by_level.orange||0,s.by_level.yellow||0],backgroundColor:['#ff4760','#ffa040','#ffd000'],borderWidth:0}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+ctx.parsed}}}},cutout:'65%'}
+    })
+  }catch(e){el.innerHTML=''}
+}
+
 // ========== 告警批量操作 ==========
 function alUpdCnt(){const cbs=document.querySelectorAll('.al-cb:checked');const cnt=cbs.length;const bar=document.getElementById('al-batch');bar.style.display=cnt?'flex':'none';document.getElementById('al-sel-cnt').textContent=`已选${cnt}项`;document.getElementById('al-cb-all').checked=cnt===document.querySelectorAll('.al-cb').length&&cnt>0}
 function alSelAll(chk){document.querySelectorAll('.al-cb').forEach(c=>c.checked=chk);alUpdCnt()}
 function clrAlSel(){document.querySelectorAll('.al-cb').forEach(c=>c.checked=false);alUpdCnt()}
-async function batchAl(action){const ids=Array.from(document.querySelectorAll('.al-cb:checked')).map(c=>parseInt(c.value));if(!ids.length)return;const r=await afP('/alerts/batch',{ids,action});if(r&&r.success){ldAl();clrAlSel()}}
+// 批量办结（含原因选择）
+async function batchResolve(){
+  if(_alBusy)return;
+  const ids=Array.from(document.querySelectorAll('.al-cb:checked')).map(c=>parseInt(c.value));
+  if(!ids.length){showToast('请先选择告警','warning');return}
+  const ov=document.createElement('div');ov.className='modal-overlay';
+  ov.innerHTML='<div class="modal"><h4>&#187;&#187;&#187; 批量办结 ('+ids.length+'条)</h4><div style="margin-bottom:10px;font-size:12px;color:#5ea8c8">请选择统一办结原因</div><div style="margin-bottom:10px">'+
+    ['误报','仪器正常偏差','已自动恢复','已人工处理'].map((r,i)=>'<label style="display:flex;align-items:center;gap:6px;padding:6px 8px;margin:3px 0;border-radius:3px;cursor:pointer;border:1px solid rgba(0,200,180,0.1);background:rgba(0,200,180,0.02)" onclick="this.parentElement.querySelectorAll(\'input\').forEach(c=>c.checked=false);this.querySelector(\'input\').checked=true"><input type="radio" name="br-reason" value="'+r+'" '+(i===0?'checked':'')+' style="width:14px;height:14px"><span style="font-size:13px;color:#d0e8ff">'+r+'</span></label>').join('')+
+  '</div><div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="doBatchResolve()">确认办结</button><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest(\'.modal-overlay\').remove()">取消</button></div></div>';
+  document.body.appendChild(ov)
+}
+async function doBatchResolve(){
+  if(_alBusy)return;
+  const reason=document.querySelector('input[name="br-reason"]:checked');
+  if(!reason){showToast('请选择办结原因','warning');return}
+  const ids=Array.from(document.querySelectorAll('.al-cb:checked')).map(c=>parseInt(c.value));
+  if(!ids.length){showToast('请先选择告警','warning');return}
+  _alBusy=true;showToast('批量办结中 ('+ids.length+'条)...','info');
+  try{
+    const r=await afP('/alerts/batch',{ids,action:'resolve',reason:reason.value});
+    if(r&&r.success){showToast('批量办结成功 ('+ids.length+'条)');document.querySelectorAll('.modal-overlay').forEach(e=>e.remove());ldAl();clrAlSel()}else{showToast('批量办结失败','error')}
+  }catch(e){showToast('操作异常: '+e.message,'error')}finally{_alBusy=false}
+}
+async function batchAl(action){if(_alBusy)return;const ids=Array.from(document.querySelectorAll('.al-cb:checked')).map(c=>parseInt(c.value));if(!ids.length){showToast('请先选择告警','warning');return}_alBusy=true;showToast('批量操作进行中 ('+ids.length+'条)...','info');try{const r=await afP('/alerts/batch',{ids,action});if(r&&r.success){showToast('批量操作成功 ('+ids.length+'条)');ldAl();clrAlSel()}else{showToast('批量操作失败'+(r&&r.error?': '+r.error:''),'error')}}catch(e){showToast('操作异常: '+e.message,'error')}finally{_alBusy=false}}
 async function alUrge(id){
   const ov=document.createElement('div');ov.className='modal-overlay';
-  ov.innerHTML=`<div class="modal"><h4>&#187;&#187;&#187; 督办告警</h4>
-    <div class="form-row"><label>督办意见（必填）</label><textarea id="urge-remark" placeholder="请输入督办意见..." minlength="1"></textarea></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="doUrge(${id})">提交督办</button><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest('.modal-overlay').remove()">取消</button></div></div>`;
+  ov.innerHTML='<div class="modal"><h4>&#187;&#187;&#187; 督办告警</h4><div class="form-row"><label>限办时间</label><input type="date" id="urge-deadline" style="width:200px"></div><div class="form-row"><label>协办单位/人员</label><input id="urge-coop" placeholder="输入协办单位或人员..." style="width:200px"></div><div class="form-row"><label>督办意见（必填）</label><textarea id="urge-remark" placeholder="请输入督办意见..." minlength="1"></textarea></div><div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="doUrge('+id+')">提交督办</button><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest(\'.modal-overlay\').remove()">取消</button></div></div>';
   document.body.appendChild(ov)
 }
 async function doUrge(id){
-  const remark=document.getElementById('urge-remark').value;if(!remark.trim()){alert('请输入督办意见');return}
-  const r=await afP('/alerts/'+id+'/urge',{operator:'系统',remark});if(r&&r.success){document.querySelectorAll('.modal-overlay').forEach(e=>e.remove());ldAl()}
+  if(_alBusy)return;
+  const remark=document.getElementById('urge-remark').value;if(!remark.trim()){showToast('请输入督办意见','warning');return}
+  const deadline=document.getElementById('urge-deadline').value;
+  const cooperator=document.getElementById('urge-coop').value.trim();
+  const btn=event&&event.target;if(btn){btn.disabled=true;btn.textContent='提交中...'}
+  _alBusy=true;
+  try{
+    const r=await afP('/alerts/'+id+'/urge',{operator:'系统',remark,deadline,cooperator});if(r&&r.success){document.querySelectorAll('.modal-overlay').forEach(e=>e.remove());showToast('督办已提交');ldAl()}else{showToast('督办提交失败','error')}
+  }finally{_alBusy=false;if(btn){btn.disabled=false;btn.textContent='提交督办'}}
 }
-async function alConvert(id,assignee=''){
-  if(!confirm('确认要将此告警转为工单？'))return
-  const r=await afP('/alerts/'+id+'/convert-order',{assignee});if(r&&r.success){alert('已转工单: '+r.order_no);ldAl();ldOr()}
+async function alConvert(id){
+  if(_alBusy)return;
+  const ov=document.createElement('div');ov.className='modal-overlay';
+  ov.innerHTML='<div class="modal"><h4>&#187;&#187;&#187; 告警转工单</h4><div class="form-row"><label>负责人</label><input id="cv-asgn" placeholder="输入负责人名称..." style="width:200px"></div><div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="doConvert('+id+')">确认转单</button><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest(\'.modal-overlay\').remove()">取消</button></div></div>';
+  document.body.appendChild(ov)
 }
-async function ack(id){
-  if(!confirm('确认要处理此告警？'))return
-  const r=await afP('/alerts/'+id+'/acknowledge',{operator:'系统'});if(r&&r.success)ldAl()
+async function doConvert(id){
+  if(_alBusy)return;
+  const assignee=document.getElementById('cv-asgn').value.trim();
+  const btn=event&&event.target;if(btn){btn.disabled=true;btn.textContent='转单中...'}
+  _alBusy=true;showToast('处理中...','info');
+  try{
+    const r=await afP('/alerts/'+id+'/convert-order',{assignee});
+    if(r&&r.success){showToast('已转工单: '+r.order_no);document.querySelectorAll('.modal-overlay').forEach(e=>e.remove());updateAlertRow(id,'acknowledged');updateAlertCounters();cockpitAlertRefresh();ldOr()}else{showToast('转单失败','error')}
+  }finally{_alBusy=false;if(btn){btn.disabled=false;btn.textContent='确认转单'}}
 }
-async function resolve(id){
-  if(!confirm("确认办结此告警？"))return
-  const r=await afP("/alerts/"+id+"/resolve",{operator:"系统"});if(r&&r.success)ldAl()
-}async function showAlertTimeline(id){const t=await af('/timeline?source_type=alert&source_id='+id);if(!t)return;const ov=document.createElement('div');ov.className='modal-overlay';const TL={'acknowledged':'确认告警','urged':'督办','converted':'转工单'};ov.innerHTML=`<div class="modal" style="max-width:500px"><h4>&#187;&#187;&#187; 告警时间线 #${id}</h4><div style="max-height:350px;overflow-y:auto">${t.map(e=>`<div style="padding:6px 0;border-left:2px solid #00e0c0;padding-left:12px;margin-bottom:4px;position:relative"><div style="position:absolute;left:-5px;top:10px;width:8px;height:8px;border-radius:50%;background:#00e0c0"></div><div style="font-size:11px;color:#b0d4ef">${TL[e.event_type]||e.event_type}</div><div style="font-size:10px;color:#5ea8c8">${e.operator} · ${e.created_at}</div>${e.remark?`<div style="font-size:10px;color:#4a8aaa;margin-top:2px">${e.remark}</div>`:''}</div>`).join('')||'<div style="color:#4a8aaa;text-align:center;padding:20px">暂无时间线记录</div>'}</div><button class="btn btn-sm" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15);margin-top:8px" onclick="this.closest('.modal-overlay').remove()">关闭</button></div>`;document.body.appendChild(ov)}
-async function ldOr(){const d=await af('/workorders?limit=100');if(!d)return;const OB={'pending':'gray','accepted':'blue','generated':'cyan','dispatched':'org','in_progress':'grn','reviewing':'purple','acceptance':'yellow','closed':'darkgrn'};document.getElementById('or-body').innerHTML=d.map(o=>`<tr style="cursor:pointer" onclick="showOrderDetail('${o.order_no}')"><td style="font-family:monospace;color:#00e0c0">${o.order_no}</td><td>${o.site_name||'-'}</td><td>${SL[o.source]||o.source}</td><td><span class="badge badge-${o.level==='critical'?'red':o.level==='urgent'?'org':'cyan'}">${LM[o.level]}</span></td><td>${o.title}</td><td><span class="badge badge-${OB[o.status]||'cyan'}">${SM[o.status]}</span></td><td>${o.assignee||'-'}</td><td style="font-size:10px">${o.sla_deadline||'-'}</td><td><button class="btn btn-primary btn-sm" onclick="event.stopPropagation();flw('${o.order_no}')">流转</button></td></tr>`).join('')}
+// 办结弹窗（选择原因）
+async function alertResolve(id){
+  if(_alBusy)return;
+  const ov=document.createElement('div');ov.className='modal-overlay';
+  ov.innerHTML='<div class="modal"><h4>&#187;&#187;&#187; 告警办结</h4><div style="margin-bottom:10px;font-size:12px;color:#5ea8c8">请选择办结原因</div><div style="margin-bottom:10px">'+
+    ['误报','仪器正常偏差','已自动恢复','已人工处理'].map((r,i)=>'<label style="display:flex;align-items:center;gap:6px;padding:6px 8px;margin:3px 0;border-radius:3px;cursor:pointer;border:1px solid rgba(0,200,180,0.1);background:rgba(0,200,180,0.02)" onclick="document.querySelectorAll(\'.rs-cb\').forEach(c=>c.checked=false);this.querySelector(\'.rs-cb\').checked=true"><input type="radio" class="rs-cb" name="rs-reason" value="'+r+'" '+(i===0?'checked':'')+' style="width:14px;height:14px"><span style="font-size:13px;color:#d0e8ff">'+r+'</span></label>').join('')+
+  '</div><div class="form-row"><label>备注（可选）</label><textarea id="rs-remark" placeholder="补充说明..." style="height:50px"></textarea></div><div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="doResolve('+id+')">确认办结</button><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest(\'.modal-overlay\').remove()">取消</button></div></div>';
+  document.body.appendChild(ov)
+}
+async function doResolve(id){
+  if(_alBusy)return;
+  const reason=document.querySelector('.rs-cb:checked');
+  if(!reason){showToast('请选择办结原因','warning');return}
+  const remark=document.getElementById('rs-remark').value.trim();
+  const btn=event&&event.target;if(btn){btn.disabled=true;btn.textContent='办结中...'}
+  _alBusy=true;
+  try{
+    const r=await afP('/alerts/'+id+'/resolve',{operator:'系统',reason:reason.value,remark});
+    if(r&&r.success){document.querySelectorAll('.modal-overlay').forEach(e=>e.remove());updateAlertRow(id,'resolved');updateAlertCounters();cockpitAlertRefresh();showToast('告警已办结')}else{showToast('操作失败，请重试','error')}
+  }finally{_alBusy=false;if(btn){btn.disabled=false;btn.textContent='确认办结'}}
+}
+// 撤销确认
+async function undoAck(id){
+  if(_alBusy)return;
+  const btn=event&&event.target;if(btn){btn.disabled=true;btn.textContent='处理中...'}
+  _alBusy=true;showToast('处理中...','info');
+  try{
+    const r=await afP('/alerts/'+id+'/undo-acknowledge',{operator:'系统'});
+    if(r&&r.success){showToast('已撤销确认');ldAl()}else{showToast('操作失败，请重试','error')}
+  }finally{_alBusy=false;if(btn){btn.disabled=false;btn.textContent='撤销确认'}}
+}
 
+// 单行告警DOM更新（不刷新全表）
+// Toast 浮动提示
+function showToast(msg,type){
+  type=type||'success';
+  let c=document.querySelector('.toast-container');
+  if(!c){c=document.createElement('div');c.className='toast-container';document.body.appendChild(c)}
+  const t=document.createElement('div');t.className='toast '+type;t.textContent=msg;
+  c.appendChild(t);
+  setTimeout(()=>{t.classList.add('fade');setTimeout(()=>{if(t.parentNode)t.remove()},400)},2500)
+}
+
+function updateAlertRow(id,newStatus){
+  const tr=document.querySelector('#al-body tr[data-id="'+id+'"]');
+  if(!tr)return;
+  // 状态文本和颜色
+  const st=newStatus==='acknowledged'?'已确认':'已办结';
+  const sc=newStatus==='acknowledged'?'#5ea8c8':'#2ea080';
+  const stEl=tr.querySelector('.al-status-text');
+  if(stEl){stEl.textContent=st;stEl.style.color=sc;stEl.dataset.status=newStatus}
+  // 操作按钮列
+  const td=tr.querySelector('td:last-child');
+  if(td){
+    if(newStatus==='acknowledged') td.innerHTML='<button class="btn btn-success btn-xs" onclick="alertResolve('+id+')">办结</button><button class="btn btn-xs" style="color:#ffa040;border:1px solid rgba(255,160,64,0.2)" onclick="undoAck('+id+')">撤销确认</button><button class="btn btn-xs" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="showAlertTimeline('+id+')">时间线</button>';
+    else td.innerHTML='<button class="btn btn-xs" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="showAlertTimeline('+id+')">时间线</button>'
+  }
+}
+// 更新告警计数器（不重新拉取，基于DOM计算）
+function updateAlertCounters(){
+  const rows=document.querySelectorAll('#al-body tr');
+  let pending=0;
+  rows.forEach(r=>{const s=r.querySelector('.al-status-text');if(s&&s.dataset.status==='pending')pending++});
+  const total=rows.length;
+  document.getElementById('al-stat').textContent='待处理 '+pending+' | 共 '+total;
+  document.getElementById('ns-alerts').textContent=pending;
+  document.getElementById('ns-alerts').className=pending?'nsn danger':'nsn';
+  // 同步更新指标卡
+  renderAlertMetrics()
+}
+// 驾驶舱告警面板微刷新
+function cockpitAlertRefresh(){
+  const feed=document.getElementById('alert-feed');
+  const badge=document.getElementById('alert-badge');
+  if(!feed)return;
+  const rows=document.querySelectorAll('#al-body tr');
+  const pendingAlerts=[];
+  rows.forEach(r=>{const s=r.querySelector('.al-status-text');if(s&&s.dataset.status==='pending'){const id=parseInt(r.dataset.id);const lv=r.querySelector('td:nth-child(2) span').style.color;const nm=r.querySelector('td:nth-child(3)').textContent;const msg=r.querySelector('td:nth-child(6)').textContent;const tm=r.querySelector('td:nth-child(8)').textContent;pendingAlerts.push({id,lv,nm,msg,tm})}});
+  if(badge)badge.textContent=pendingAlerts.length?pendingAlerts.length+'条':'';
+  if(feed)feed.innerHTML=pendingAlerts.length?pendingAlerts.slice(0,8).map(x=>{const lt=x.lv==='#ff4760'?'异常':'待确认';return '<div class="alert-item" style="cursor:pointer" onclick="showAlertDetail('+x.id+')"><span style="color:'+x.lv+';font-weight:500;font-size:12px">'+lt+'</span><span class="alert-msg">'+x.nm+':'+x.msg+'</span><span class="alert-tm">'+(x.tm||'').substring(11,16)+'</span></div>'}).join(''):'<span style="color:#5ea8c8">系统运行正常，无告警</span>'
+}
+
+async function showAlertTimeline(id){const t=await af('/timeline?source_type=alert&source_id='+id);if(!t)return;const ov=document.createElement('div');ov.className='modal-overlay';const TL={'acknowledged':'确认告警','urged':'督办','converted':'转工单'};ov.innerHTML=`<div class="modal" style="max-width:500px"><h4>&#187;&#187;&#187; 告警时间线 #${id}</h4><div style="max-height:350px;overflow-y:auto">${t.map(e=>`<div style="padding:6px 0;border-left:2px solid #00e0c0;padding-left:12px;margin-bottom:4px;position:relative"><div style="position:absolute;left:-5px;top:10px;width:8px;height:8px;border-radius:50%;background:#00e0c0"></div><div style="font-size:11px;color:#b0d4ef">${TL[e.event_type]||e.event_type}</div><div style="font-size:10px;color:#5ea8c8">${e.operator} · ${e.created_at}</div>${e.remark?`<div style="font-size:10px;color:#4a8aaa;margin-top:2px">${e.remark}</div>`:''}</div>`).join('')||'<div style="color:#4a8aaa;text-align:center;padding:20px">暂无时间线记录</div>'}</div><button class="btn btn-sm" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15);margin-top:8px" onclick="this.closest('.modal-overlay').remove()">关闭</button></div>`;document.body.appendChild(ov)}
+async function ldOr(){const d=await af('/workorders?limit=100');if(!d)return;const OB={'pending':'gray','accepted':'blue','generated':'cyan','dispatched':'org','in_progress':'grn','reviewing':'purple','acceptance':'yellow','closed':'darkgrn'};document.getElementById('or-body').innerHTML=d.map(o=>`<tr style="cursor:pointer" onclick="showOrderDetail('${o.order_no}')"><td style="font-family:monospace;color:#00e0c0">${o.order_no}</td><td>${o.site_name||'-'}</td><td>${SL[o.source]||o.source}</td><td><span class="badge badge-${o.level==='critical'?'red':o.level==='urgent'?'org':'cyan'}">${LM[o.level]}</span></td><td>${o.title}</td><td><span class="badge badge-${OB[o.status]||'cyan'}">${SM[o.status]}</span></td><td>${o.assignee||'-'}</td><td style="font-size:10px">${o.sla_deadline||'-'}</td><td><button class="btn btn-primary btn-sm" onclick="event.stopPropagation();flw('${o.order_no}')">流转</button><button class="btn btn-xs" style="color:#ff4760;border:1px solid rgba(255,71,96,0.2);margin-left:4px" onclick="event.stopPropagation();delOrder('${o.order_no}')">删除</button></td></tr>`).join('')}
+
+async function delOrder(no){
+  if(!confirm("确认删除工单 "+no+"？"))return;
+  try{const r=await fetch(API+"/workorders/"+no,{method:"DELETE"});const j=await r.json();if(j&&j.success){document.querySelectorAll(".modal-overlay").forEach(function(e){e.remove()});ldOr()}else{alert(j.error||"删除失败")}}catch(e){alert("删除失败: "+e.message)}
+}
 async function showOrderDetail(no){
   const d=await af('/workorders?limit=200');if(!d)return;
   const o=d.find(x=>x.order_no===no);if(!o)return;
@@ -632,35 +857,96 @@ async function upd(no,s){const r=await afPt('/workorders/'+no+'/status',{status:
 async function ldHl(){const d=await af('/hotline/events?limit=50');if(!d)return;document.getElementById('hl-body').innerHTML=d.map(e=>`<tr><td>${e.caller_name||'匿名'}</td><td>${e.caller_phone||'-'}</td><td>${e.event_type}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.description}</td><td>${e.location||'-'}</td><td><span class="badge badge-${e.status==='dispatched'?'grn':'cyan'}">${e.status==='dispatched'?'已转':'已登记'}</span></td><td>${e.created_at}</td></tr>`).join('')}
 async function ldMp(){
   const d=await af('/maintenance/plans');if(!d)return;
+  const tpls=await af('/maintenance/templates');
   const FM={'environment':'站院环境','facility':'设施设备','observation':'观测场','section':'断面环境','safety':'安全检查','generator':'发电机'};
   const FR={'weekly':'每周','biweekly':'双周','monthly':'每月','seasonal':'每季','yearly':'每年'};
   document.getElementById('mp-body').innerHTML=d.map(p=>{
-    // 进度：待处理=30%，已完成=70%，已审核=100%
-    const pct=p.review_status==='passed'?100:p.review_status==='rejected'?100:p.status==='completed'?70:30;
+    // 计算完成率：有模板检查项则按勾选比例算
+    let pct=30;
+    if(p.review_status==='passed'){pct=100}
+    else if(p.review_status==='rejected'){pct=100}
+    else if(p.status==='completed'){pct=70}
+    if(p.template_id&&p.check_results){
+      var t=tpls?tpls.find(function(t){return t.id===p.template_id}):null;
+      if(t&&t.check_items&&t.check_items.length){
+        var done=0;try{var cr=typeof p.check_results==='string'?JSON.parse(p.check_results):p.check_results;done=cr.length}catch(e){done=0}
+        pct=Math.round(done/t.check_items.length*100);
+        if(p.status==='completed'&&pct<100)pct=70;
+      }
+    }
     const pctClr=pct>=100?'#2ea080':pct>=70?'#00e0c0':'#ffa040';
-    const pLabel=p.review_status==='passed'?'审核通过':p.review_status==='rejected'?'已驳回':p.status==='completed'?'完成待审':'待处理';
-    return `<tr style="cursor:pointer" onclick="showMpDetail(${p.id})"><td>${p.plan_name}</td><td>${p.site_name||'-'}</td><td>${FM[p.category]||p.category}</td><td>${FR[p.frequency]||p.frequency}</td><td>${p.due_date||'-'}</td><td style="min-width:100px"><div style="display:flex;align-items:center;gap:4px"><div style="flex:1;height:8px;background:rgba(0,200,180,0.06);border-radius:4px"><div style="height:100%;width:${pct}%;background:${pctClr};border-radius:4px;transition:width .3s"></div></div><span style="font-size:10px;color:${pctClr};white-space:nowrap">${pLabel}</span></div></td><td style="white-space:nowrap">
-      ${p.review_status==='passed'?'':`<button class="btn btn-success btn-xs" onclick="cmpMp(${p.id})">完成</button>`}
-      ${p.review_status!=='passed'?`<button class="btn btn-primary btn-xs" onclick="edtMp(${p.id})">修改</button>`:''}
-      ${p.review_status==='passed'?'':`<button class="btn btn-xs" style="color:#ff4760;border:1px solid rgba(255,71,96,0.2)" onclick="delMp(${p.id})">删除</button>`}
-      ${p.status==='completed'&&p.review_status!=='passed'?`<button class="btn btn-warning btn-xs" onclick="revMp(${p.id})">审核</button>`:''}
-    </td></tr>`
+    const pLabel=p.review_status==='passed'?'审核通过':p.review_status==='rejected'?'已驳回':p.status==='completed'?pct+'%':'待处理';
+    return '<tr style="cursor:pointer" onclick="showMpDetail('+p.id+')"><td>'+p.plan_name+'</td><td>'+(p.site_name||'-')+'</td><td>'+(FM[p.category]||p.category)+'</td><td>'+(FR[p.frequency]||p.frequency)+'</td><td>'+(p.due_date||'-')+'</td><td style="min-width:100px"><div style="display:flex;align-items:center;gap:4px"><div style="flex:1;height:8px;background:rgba(0,200,180,0.06);border-radius:4px"><div style="height:100%;width:'+pct+'%;background:'+pctClr+';border-radius:4px;transition:width .3s"></div></div><span style="font-size:10px;color:'+pctClr+';white-space:nowrap">'+pLabel+'</span></div></td><td style="white-space:nowrap">'+
+      (p.review_status==='passed'?'':'<button class="btn btn-success btn-xs" onclick="cmpMp('+p.id+')">完成</button>')+
+      (p.review_status!=='passed'?'<button class="btn btn-primary btn-xs" onclick="edtMp('+p.id+')">修改</button>':'')+
+      (p.review_status==='passed'?'':'<button class="btn btn-xs" style="color:#ff4760;border:1px solid rgba(255,71,96,0.2)" onclick="delMp('+p.id+')">删除</button>')+
+      (p.status==='completed'&&p.review_status!=='passed'?'<button class="btn btn-warning btn-xs" onclick="revMp('+p.id+')">审核</button>':'')+
+    '</td></tr>'
   }).join('')
 }
-async function cmpMp(id){await afPt('/maintenance/plans/'+id+'/complete',{});ldMp()}
+async function cmpMp(id){
+  const plan=await af('/maintenance/plans');if(!plan)return;
+  const p=plan.find(x=>x.id===id);if(!p)return;
+  // 如果有模板检查项，弹出勾选清单
+  if(p.template_id){
+    const tpls=await af('/maintenance/templates');if(!tpls)return;
+    const tpl=tpls.find(t=>t.id===p.template_id);
+    if(tpl&&tpl.check_items&&tpl.check_items.length){
+      const ov=document.createElement('div');ov.className='modal-overlay';
+      let itemsHtml=tpl.check_items.map(function(item,i){return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,200,180,0.04);cursor:pointer"><input type="checkbox" class="mp-ci" value="'+item.id+'" checked style="width:16px;height:16px"><span style="font-size:13px;color:#d0e8ff">'+item.label+'</span></label>'}).join('');
+      ov.innerHTML='<div class="modal" style="max-width:450px"><h4>完成运维任务</h4><div style="margin-bottom:8px;font-size:12px;color:#5ea8c8">'+p.plan_name+'</div><div style="margin-bottom:10px;padding:8px;background:rgba(0,200,180,0.03);border-radius:3px;font-size:12px;color:#b0d4ef">勾选已完成项：</div><div>'+itemsHtml+'</div><div class="form-row" style="margin-top:8px"><textarea id="mp-ci-remark" placeholder="执行备注（可选）" style="height:50px"></textarea></div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary" onclick="sbmCmpMp('+id+')">提交完成</button><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest(\'.modal-overlay\').remove()">取消</button></div></div>';
+      document.body.appendChild(ov);
+      return
+    }
+  }
+  // 无模板，直接完成
+  await afPt('/maintenance/plans/'+id+'/complete',{});ldMp()
+}
+async function sbmCmpMp(id){
+  const cbs=document.querySelectorAll('.mp-ci:checked');
+  const results=Array.from(cbs).map(function(cb){return cb.value});
+  const remark=document.getElementById('mp-ci-remark').value;
+  await afPt('/maintenance/plans/'+id+'/complete',{check_results:results,remark:remark});
+  document.querySelectorAll('.modal-overlay').forEach(function(e){e.remove()});
+  ldMp()
+}
 
-// ========== 运维计划CRUD ==========
+// ========== 运维计划CRUD（模板化） ==========
 async function mNewMp(){
-  const sites=await af('/sites');if(!sites)return;
+  const tpls=await af('/maintenance/templates');if(!tpls||!tpls.length)return;
+  const cats={};tpls.forEach(function(t){if(!cats[t.category])cats[t.category]=[];cats[t.category].push(t)});
+  const catCn={'日常维护':'日常维护','日常管理':'日常管理','设备仪器维护':'设备仪器维护'};
+  const FR={'weekly':'每周','biweekly':'双周','monthly':'每月','seasonal':'每季','yearly':'每年'};
   const ov=document.createElement('div');ov.className='modal-overlay';
-  ov.innerHTML=`<div class="modal"><h4>&#187;&#187;&#187; 新建运维计划</h4>
-    <div class="form-row"><label>计划名称</label><input id="mp-n" placeholder="如：青山水库站院环境维护"></div>
-    <div class="form-row"><label>站点</label><select id="mp-sid">${sites.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
-    <div class="form-row"><label>类型</label><select id="mp-cat"><option value="environment">站院环境</option><option value="facility">设施设备</option><option value="observation">观测场</option><option value="section">断面环境</option><option value="safety">安全检查</option><option value="generator">发电机</option></select></div>
-    <div class="form-row"><label>频次</label><select id="mp-fr"><option value="weekly">每周</option><option value="biweekly">双周</option><option value="monthly">每月</option><option value="seasonal">每季</option><option value="yearly">每年</option></select></div>
-    <div class="form-row"><label>到期日</label><input type="date" id="mp-dd"></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="sbmMp()">提交</button><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest('.modal-overlay').remove()">取消</button></div></div>`;
+  const catHtml=Object.entries(cats).map(function([cat,items]){
+    return '<div style="margin-bottom:10px"><div style="color:#00e0c0;font-size:13px;font-weight:500;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid rgba(0,200,180,0.08)">'+(catCn[cat]||cat)+'</div>'+
+      items.map(function(t){
+        return '<div class="mp-tpl-item" data-id="'+t.id+'" style="padding:6px 8px;margin:2px 0;border-radius:3px;cursor:pointer;border:1px solid rgba(0,200,180,0.08);transition:all .15s;background:rgba(0,200,180,0.02)" onmouseover="this.style.borderColor=\'rgba(0,200,180,0.3)\';this.style.background=\'rgba(0,200,180,0.06)\'" onmouseout="this.style.borderColor=\'rgba(0,200,180,0.08)\';this.style.background=\'rgba(0,200,180,0.02)\'" onclick="selTpl('+t.id+')">'+
+        '<div style="font-size:13px;color:#d0e8ff">'+t.title+'</div>'+
+        '<div style="font-size:11px;color:#5ea8c8;margin-top:2px">频次:'+(FR[t.frequency]||t.frequency)+' | 预估:'+t.estimated_hours+'h'+(t.photo_required?' | 需拍照':'')+'</div></div>'
+      }).join('')
+  }).join('');
+  ov.innerHTML='<div class="modal" style="max-width:520px"><h4>选择运维模板</h4><div style="max-height:400px;overflow-y:auto;scrollbar-width:thin">'+catHtml+'</div><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15);margin-top:8px" onclick="this.closest(\'.modal-overlay\').remove()">取消</button></div>';
   document.body.appendChild(ov)
+}
+async function selTpl(id){
+  const tpls=await af('/maintenance/templates');if(!tpls)return;
+  const tpl=tpls.find(function(t){return t.id===id});if(!tpl)return;
+  const sites=await af('/sites');if(!sites)return;
+  document.querySelectorAll('.modal-overlay').forEach(function(e){e.remove()});
+  const ov=document.createElement('div');ov.className='modal-overlay';
+  ov.innerHTML='<div class="modal"><h4>新建: '+tpl.title+'</h4>'+
+    '<div style="font-size:11px;color:#5ea8c8;margin-bottom:8px;padding:6px;background:rgba(0,200,180,0.03);border-radius:3px">'+tpl.description+'</div>'+
+    '<div class="form-row"><label>站点</label><select id="mp-sid">'+sites.map(function(s){return '<option value="'+s.id+'">'+s.name+'</option>'}).join('')+'</select></div>'+
+    '<div class="form-row"><label>到期日</label><input type="date" id="mp-dd"></div>'+
+    '<div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="sbmTplMp('+id+')">创建并发布</button><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest(\'.modal-overlay\').remove()">取消</button></div></div>';
+  document.body.appendChild(ov)
+}
+async function sbmTplMp(id){
+  const sid=parseInt(document.getElementById('mp-sid').value);
+  const dd=document.getElementById('mp-dd').value;
+  const r=await afP('/maintenance/plans',{site_id:sid,template_id:id,due_date:dd});
+  if(r&&r.success){alert('计划创建成功');document.querySelectorAll('.modal-overlay').forEach(function(e){e.remove()});ldMp()}
 }
 async function sbmMp(){
   const d={site_id:parseInt(document.getElementById('mp-sid').value),plan_name:document.getElementById('mp-n').value,category:document.getElementById('mp-cat').value,frequency:document.getElementById('mp-fr').value,due_date:document.getElementById('mp-dd').value};
@@ -725,23 +1011,34 @@ async function showMpDetail(id){
   const d=await af('/maintenance/plans');if(!d)return;const p=d.find(x=>x.id===id);if(!p)return;
   const FM={'environment':'站院环境','facility':'设施设备','observation':'观测场','section':'断面环境','safety':'安全检查','generator':'发电机'};
   const FR={'weekly':'每周','biweekly':'双周','monthly':'每月','seasonal':'每季','yearly':'每年'};
+  // 获取模板检查项
+  let checkHtml='<div style="font-size:11px;padding:4px 0">标准检查项: 加载中...</div>';
+  if(p.template_id){
+    const tpls=await af('/maintenance/templates');
+    const tpl=tpls?tpls.find(t=>t.id===p.template_id):null;
+    if(tpl&&tpl.check_items){
+      const results=p.check_results?p.check_results:null;
+      checkHtml=tpl.check_items.map(function(item){
+        var done=results&&results.includes(item.id);
+        var clr=done?'#2ea080':'#5ea8c8';
+        var icon=done?'&#10003;':'&#9679;';
+        return '<div style="font-size:12px;padding:5px 0;border-bottom:1px solid rgba(0,200,180,0.04);color:'+clr+'"><span style="margin-right:6px">'+icon+'</span>'+item.label+(done?' <span style="font-size:10px;color:#2ea080">已完成</span>':'')+'</div>'
+      }).join('')
+    }
+  } else {
+    checkHtml='<div style="font-size:11px;padding:4px 0;color:#4a8aaa">未关联模板，无标准检查项</div>'
+  }
   const ov=document.createElement('div');ov.className='modal-overlay';
-  ov.innerHTML=`<div class="modal" style="max-width:600px"><h4>&#187;&#187;&#187; 运维计划详情: ${p.plan_name}</h4>
-    <div style="font-size:12px;margin-bottom:8px;padding:8px;background:rgba(0,200,180,0.03);border-radius:3px">
-      <div>站点: ${p.site_name||'-'} | 类型: ${FM[p.category]||p.category} | 频次: ${FR[p.frequency]||p.frequency}</div>
-      <div>到期日: ${p.due_date||'-'} | 负责人: ${p.assignee||'-'} | 状态: ${p.status==='completed'?'已完成':'待处理'}</div>
-      <div style="margin-top:4px;color:#b0d4ef;font-size:11px">执行说明: ${p.remark||'按计划执行标准维护流程'}</div>
-    </div>
-    <div style="border-top:1px solid rgba(0,200,180,0.06);padding-top:6px">
-      <div style="font-size:11px;color:#5ea8c8;margin-bottom:4px">检查项目</div>
-      <div style="font-size:11px;padding:4px 0;border-bottom:1px solid rgba(0,200,180,0.04)">1. ${p.category==='environment'?'站院环境卫生检查':p.category==='facility'?'设施设备运行检查':p.category==='observation'?'观测场设备检查':p.category==='section'?'断面环境巡查':p.category==='safety'?'安全检查项':'发电机运行检查'}</div>
-      <div style="font-size:11px;padding:4px 0;border-bottom:1px solid rgba(0,200,180,0.04)">2. 记录检查结果</div>
-      <div style="font-size:11px;padding:4px 0">3. 上报异常情况</div>
-    </div>
-    <div style="margin-top:8px;padding:6px;background:rgba(255,160,64,0.03);border-radius:3px;border:1px dashed rgba(255,160,64,0.2)">
-      <div style="font-size:10px;color:#ffa040">📎 现场照片凭证（待移动端接入后可查看上传资料）</div>
-    </div>
-    <div style="margin-top:8px;display:flex;gap:8px"><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest('.modal-overlay').remove()">关闭</button></div></div>`;
+  ov.innerHTML='<div class="modal" style="max-width:600px"><h4>运维计划详情: '+p.plan_name+'</h4>'+
+    '<div style="font-size:12px;margin-bottom:8px;padding:8px;background:rgba(0,200,180,0.03);border-radius:3px">'+
+      '<div>站点: '+(p.site_name||'-')+' | 分类: '+(FM[p.category]||p.category)+' | 频次: '+(FR[p.frequency]||p.frequency)+'</div>'+
+      '<div>到期日: '+(p.due_date||'-')+' | 负责人: '+(p.assignee||'-')+' | 状态: '+(p.status==='completed'?'已完成':'待处理')+'</div>'+
+      (p.remark?'<div style="margin-top:4px;color:#b0d4ef;font-size:11px">执行说明: '+p.remark+'</div>':'')+
+    '</div>'+
+    '<div style="border-top:1px solid rgba(0,200,180,0.06);padding-top:6px">'+
+      '<div style="font-size:11px;color:#5ea8c8;margin-bottom:4px">检查项目</div>'+checkHtml+
+    '</div>'+
+    '<div style="margin-top:8px;display:flex;gap:8px"><button class="btn" style="color:#4a8aaa;border:1px solid rgba(0,200,180,0.15)" onclick="this.closest(\'.modal-overlay\').remove()">关闭</button></div></div>';
   document.body.appendChild(ov)
 }
 
@@ -852,7 +1149,23 @@ async function safeInit(){
   const loadingEl=document.getElementById('cockpit-loading');
   if(loadingEl)loadingEl.classList.add('hide');
 }
+// 轻量级刷新（仅刷新驾驶舱实时数据，不重载全部管理端数据）
+async function lightRefresh(){
+  try{
+    const s=await af('/data/realtime');
+    const a=await af('/alerts?limit=50');
+    if(s){const abnormal=s.filter(function(x){return x.status==='offline'||(x.latest_value>1000&&x.latest_metric!=='')}).length;document.getElementById('site-stat-badge')&&(document.getElementById('site-stat-badge').textContent=s.length+'站 '+(abnormal?abnormal+'异常':'')+(abnormal?' ⚠':''))}
+    if(a){
+      const p=a.filter(x=>x.status==='pending').sort((a,b)=>{const o={red:3,orange:2,yellow:1};return (o[b.level]||0)-(o[a.level]||0)});
+      document.getElementById('alert-badge')&&(document.getElementById('alert-badge').textContent=p.length?p.length+'条':'');
+      document.getElementById('bt-tick')&&(document.getElementById('bt-tick').textContent=p.map(x=>'['+(x.level==='red'?'红':x.level==='orange'?'橙':'黄')+']'+x.site_name+':'+x.message).join('｜')||'系统运行正常');
+      // 刷新驾驶舱预警面板
+      const feed=document.getElementById('alert-feed');
+      if(feed)feed.innerHTML=p.length?p.slice(0,8).map(x=>{const lt=x.level==='red'?'异常':'待确认';const lc=x.level==='red'?'#ff4760':x.level==='orange'?'#ffa040':'#ffd000';return '<div class="alert-item" style="cursor:pointer" onclick="showAlertDetail('+x.id+')"><span style="color:'+lc+';font-weight:500;font-size:12px">'+lt+'</span><span class="alert-msg">'+x.site_name+':'+x.message+'</span><span class="alert-tm">'+(x.created_at||'').substring(11,16)+'</span></div>'}).join(''):'<span style="color:#5ea8c8">系统运行正常，无告警</span>'
+    }
+  }catch(e){console.warn('[LightRefresh]',e)}
+}
 safeInit();
-setInterval(()=>{try{cockpitLoad()}catch(e){console.warn('[Refresh] 驾驶舱刷新失败:',e)}},30000);</script>
+setInterval(lightRefresh,30000);</script>
 </body>
 </html>

@@ -297,6 +297,21 @@ def init_db():
                 FOREIGN KEY (site_id) REFERENCES sites(id)
             );
 
+            -- 运维计划模板表
+            CREATE TABLE IF NOT EXISTS maintenance_templates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category TEXT NOT NULL,
+                sub_category TEXT NOT NULL,
+                title TEXT NOT NULL,
+                frequency TEXT NOT NULL,
+                description TEXT,
+                standard TEXT,
+                check_items TEXT,
+                photo_required INTEGER DEFAULT 0,
+                estimated_hours REAL DEFAULT 1,
+                sort_order INTEGER DEFAULT 0
+            );
+
             -- 数据到报表
             CREATE TABLE IF NOT EXISTS data_arrival (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -345,6 +360,10 @@ def init_db():
             "ALTER TABLE maintenance_plans ADD COLUMN last_urged_at TEXT",
             "ALTER TABLE maintenance_plans ADD COLUMN review_status TEXT DEFAULT NULL",
             "ALTER TABLE maintenance_plans ADD COLUMN review_comment TEXT DEFAULT NULL",
+            "ALTER TABLE maintenance_plans ADD COLUMN template_id INTEGER",
+            "ALTER TABLE maintenance_plans ADD COLUMN sub_category TEXT",
+            "ALTER TABLE maintenance_plans ADD COLUMN check_results TEXT",
+            "ALTER TABLE maintenance_plans ADD COLUMN remark TEXT",
         ]:
             try:
                 db.execute(col_sql)
@@ -639,6 +658,84 @@ def seed_maintenance():
             db.commit()
             print(f"[Seed] {len(sites)*len(categories)} maintenance plans seeded.")
 
+def seed_maintenance_templates():
+    """预置标准化运维模板（仅首次）"""
+    templates = [
+        # === 日常维护类 ===
+        ('日常维护','environment','驻测站站院环境维护（每周）','weekly',
+         '对水位井、站院、大门口进行全面的打扫，确保干净整洁',
+         '地面、窗台、设备等干净整洁，墙面、天花板无污迹、蜘蛛网、昆虫等',
+         '[{"id":"c1","label":"水位井区域全面打扫"},{"id":"c2","label":"站院地面清洁"},{"id":"c3","label":"大门口区域打扫"},{"id":"c4","label":"设备表面擦拭"},{"id":"c5","label":"墙面天花板检查（无污迹/蜘蛛网）"}]',
+         1, 2, 1),
+        ('日常维护','facility','巡测站站房维护（每月2次）','biweekly',
+         '对站房进行全面的打扫，确保干净整洁',
+         '地面、窗台、设备等干净整洁，墙面、天花板无污迹、蜘蛛网、昆虫等',
+         '[{"id":"c1","label":"站房地面清洁"},{"id":"c2","label":"窗台及设备擦拭"},{"id":"c3","label":"墙面天花板检查"},{"id":"c4","label":"门窗完好检查"}]',
+         1, 1.5, 2),
+        ('日常维护','observation','观测场管理（每月2次）','biweekly',
+         '对降蒸观测场草地进行维护，草皮高度符合规范要求',
+         '降蒸观测场、站院草皮高度低于20cm，遇重大活动增加维护次数',
+         '[{"id":"c1","label":"草地修剪"},{"id":"c2","label":"草高测量（需≤20cm）"},{"id":"c3","label":"杂草清理"},{"id":"c4","label":"场地平整度检查"}]',
+         1, 2, 3),
+        ('日常维护','section','断面环境管理（每月）','monthly',
+         '对测流断面上下游各5米进行清理杂草、杂木，确保断面整洁',
+         '断面无积水、无淤泥、无杂草、无杂物',
+         '[{"id":"c1","label":"上下游各5米杂草清理"},{"id":"c2","label":"缆道铁塔四周清理"},{"id":"c3","label":"水尺码头淤泥清理"},{"id":"c4","label":"基本水尺底部清理"},{"id":"c5","label":"拍照存档"}]',
+         1, 3, 4),
+        # === 日常管理类 ===
+        ('日常管理','facility','设施设备巡查（每月）','monthly',
+         '检查清洗水尺，对设施设备、爬梯、护栏牢固度进行全面检查',
+         '填写设施设备巡查表，有异常维修、拍照存档并报中心站网监测科',
+         '[{"id":"c1","label":"水尺清洗检查"},{"id":"c2","label":"爬梯牢固度检查"},{"id":"c3","label":"护栏牢固度检查"},{"id":"c4","label":"设施设备外观检查"},{"id":"c5","label":"异常拍照存档"}]',
+         1, 2, 5),
+        ('日常管理','safety','安全检查（每月）','monthly',
+         '对测验设施设备、安全环境、站房、灭火器、安全器材进行一次安全检查',
+         '填记好安全检查记录，存在安全隐患需及时告知中心',
+         '[{"id":"c1","label":"灭火器压力检查"},{"id":"c2","label":"安全器材完好性"},{"id":"c3","label":"站房结构安全检查"},{"id":"c4","label":"电气线路检查"},{"id":"c5","label":"填写安全检查记录"}]',
+         1, 1.5, 6),
+        ('日常管理','generator','发电机保养（每月+汛期）','monthly',
+         '对发电机进行检查机油、线路等部件，发电运行时间不少于30分钟',
+         '每年汛前汛后保养，更换机油及线路，备足燃料及机油',
+         '[{"id":"c1","label":"机油液位检查"},{"id":"c2","label":"线路及各部件检查"},{"id":"c3","label":"发电运行≥30分钟"},{"id":"c4","label":"燃料及机油储备检查"},{"id":"c5","label":"记录运行时间"}]',
+         1, 1.5, 7),
+        # === 设备仪器维护类 ===
+        ('设备仪器维护','water_level','水位项目日常巡查（每日）','weekly',
+         '观测基本水尺读数并记录，校对遥测水位及时间',
+         '人工与遥测水位相差≥0.02m时需校对，以人工观测为准调整',
+         '[{"id":"c1","label":"基本水尺读数记录"},{"id":"c2","label":"遥测水位校对"},{"id":"c3","label":"偏差检测（≥0.02m告警）"},{"id":"c4","label":"水尺清洗检查"},{"id":"c5","label":"填记水位巡查表并拍照存档"}]',
+         1, 0.5, 8),
+        ('设备仪器维护','rainfall','雨量项目日常巡检（每月）','monthly',
+         '遥测雨量器现场运行维护巡检，含数据采集终端、供电、雨量筒检查',
+         '每季度进行注水试验，误差≤±4%，大暴雨后及时检查',
+         '[{"id":"c1","label":"数据采集终端检查"},{"id":"c2","label":"供电设备检查"},{"id":"c3","label":"布线检查"},{"id":"c4","label":"雨量筒外观/水平检查"},{"id":"c5","label":"环境清理"},{"id":"c6","label":"季度注水试验（误差≤±4%）"}]',
+         1, 2, 9),
+        ('设备仪器维护','evaporation','蒸发项目日常巡检（每月）','monthly',
+         '自动蒸发设备遥测终端现场运行维护巡检',
+         '每月不少于1次巡测，每半年渗漏检查，每月至少换水一次',
+         '[{"id":"c1","label":"自动蒸发设备检查"},{"id":"c2","label":"半年渗漏检查"},{"id":"c3","label":"蒸发器换水"},{"id":"c4","label":"水圈清洁"},{"id":"c5","label":"数据合理性检查"}]',
+         1, 1.5, 10),
+        ('设备仪器维护','soil_moisture','墒情站日常巡查（季度）','seasonal',
+         '对墒情基本站巡查，保持整洁、数据校测',
+         '每季度对基本站巡查不少于1次，保持机箱内干净整洁，清理周边杂草',
+         '[{"id":"c1","label":"机箱内部清洁"},{"id":"c2","label":"周边杂草清理"},{"id":"c3","label":"无积水检查"},{"id":"c4","label":"数据校测记录"}]',
+         0, 1.5, 11),
+        ('设备仪器维护','hydrology','缆道日常巡检（测流时）','seasonal',
+         '测流时对行主索、循环索、锚碇、导向轮、绞车等进行检查维护',
+         '检查锚碇有无位移、钢丝绳夹头是否松动、绞车运转情况',
+         '[{"id":"c1","label":"主索/循环索检查"},{"id":"c2","label":"拉线/卡头检查"},{"id":"c3","label":"锚碇检查（位移/生锈）"},{"id":"c4","label":"导向轮/游轮/行车架检查"},{"id":"c5","label":"绞车运转检查"},{"id":"c6","label":"异常拍照留底"}]',
+         1, 3, 12),
+    ]
+    with get_db() as db:
+        cnt = db.execute("SELECT COUNT(*) FROM maintenance_templates").fetchone()[0]
+        if cnt == 0:
+            for t in templates:
+                db.execute(
+                    "INSERT INTO maintenance_templates (category,sub_category,title,frequency,description,standard,check_items,photo_required,estimated_hours,sort_order) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    t
+                )
+            db.commit()
+            print(f"[Seed] {len(templates)} maintenance templates seeded.")
+
 # ===================== Simulator =====================
 
 # 各河流警戒水位配置
@@ -756,6 +853,7 @@ def _generate_site_data(site, db, now):
 
 def generate_sensor_data():
     """每30秒生成模拟传感器数据"""
+    PRESET_OFFLINE = {5, 108, 193}  # 预设离线站点，跳过状态更新
     with get_db() as db:
         sites = db.execute("SELECT * FROM sites").fetchall()
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -772,24 +870,16 @@ def generate_sensor_data():
                 db.rollback()
 
             # 设备在线/离线状态切换
-            is_offline = random.random() < 0.03  # 3%概率离线
-            new_status = 'offline' if is_offline else 'online'
+            # 降低状态切换频率 (1%概率)，避免频繁跳变导致的数据一致性保证（不随机切换）
+            if sid in PRESET_OFFLINE: continue
+            new_status = 'online'
             db.execute("UPDATE device_shadows SET status=?, last_data_time=? WHERE site_id=?",
+
                        (new_status, now if new_status == 'online' else None, sid))
             db.execute("UPDATE sites SET status=?, last_heartbeat=? WHERE id=?",
                        (new_status, now if new_status == 'online' else None, sid))
 
-            # 设备离线告警
-            if is_offline:
-                create_alert_internal(db, sid, 'device_status', 0, 'yellow',
-                    f'{site["name"]} 设备离线')
-            else:
-                # 解除离线告警（如果存在）
-                db.execute(
-                    "UPDATE alerts SET status='resolved', resolved_at=? WHERE site_id=? AND metric='device_status' AND status='pending'",
-                    (now, sid)
-                )
-
+            # 离线告警已禁用（演示模式下设备不随机离线）
             # 数据异常检测：突变检测
             # 通过比对最近两条记录的差异来判断
             last_two = db.execute(
@@ -855,8 +945,9 @@ def generate_sensor_data():
         db.commit()
 
 def create_alert_internal(db, site_id, metric, value, level, message):
+    # 检查最近1小时内是否有相同的site+metric告警（含已办结），有则跳过
     exists = db.execute(
-        "SELECT id FROM alerts WHERE site_id=? AND metric=? AND level=? AND status='pending' AND created_at > datetime('now','-10 minutes')",
+        "SELECT id FROM alerts WHERE site_id=? AND metric=? AND level=? AND created_at > datetime('now','-60 minutes')",
         (site_id, metric, level)
     ).fetchone()
     if not exists:
@@ -876,12 +967,20 @@ def health():
 def get_sites():
     with get_db() as db:
         rows = db.execute("""
-            SELECT s.*, COUNT(d.id) as device_count,
-                   SUM(CASE WHEN d.status='offline' THEN 1 ELSE 0 END) as offline_count
+            SELECT s.id, s.code, s.name, s.type, s.lat, s.lng, s.district, s.river,
+                   s.manager, s.phone, s.last_heartbeat, s.created_at,
+                   COUNT(d.id) as device_count,
+                   SUM(CASE WHEN d.status='offline' THEN 1 ELSE 0 END) as offline_count,
+                   CASE WHEN SUM(CASE WHEN d.status='offline' THEN 1 ELSE 0 END) > 0 THEN 'offline' ELSE 'online' END as status
             FROM sites s LEFT JOIN device_shadows d ON s.id=d.site_id
             GROUP BY s.id ORDER BY s.id
         """).fetchall()
-        return jsonify([dict(r) for r in rows])
+        result = []
+        for r in rows:
+            d = dict(r)
+            d['status'] = r['status']  # Use calculated status
+            result.append(d)
+        return jsonify(result)
 
 @app.route('/api/sites/<int:site_id>')
 def get_site(site_id):
@@ -893,6 +992,9 @@ def get_site(site_id):
         alerts_count = db.execute("SELECT COUNT(*) as c FROM alerts WHERE site_id=? AND status='pending'", (site_id,)).fetchone()['c']
         orders_count = db.execute("SELECT COUNT(*) as c FROM work_orders WHERE site_id=? AND status NOT IN ('closed')", (site_id,)).fetchone()['c']
         site_dict = dict(site)
+        # Calculate status from devices, not from sites.status
+        offline_devices = [d for d in devices if d['status'] == 'offline']
+        site_dict['status'] = 'offline' if len(offline_devices) > 0 else 'online'
         site_dict['devices'] = [dict(d) for d in devices]
         site_dict['active_alerts'] = alerts_count
         site_dict['open_orders'] = orders_count
@@ -914,7 +1016,12 @@ def get_site(site_id):
 def realtime_data():
     """各站点最新一条数据"""
     with get_db() as db:
-        sites = db.execute("SELECT id, code, name, type, lat, lng, status FROM sites").fetchall()
+        sites = db.execute("""SELECT s.id, s.code, s.name, s.type, s.lat, s.lng,
+                   CASE WHEN COUNT(d.id) = 0 THEN 'online'
+                        WHEN SUM(CASE WHEN d.status='offline' THEN 1 ELSE 0 END) > 0 THEN 'offline'
+                        ELSE 'online' END as status
+            FROM sites s LEFT JOIN device_shadows d ON s.id=d.site_id
+            GROUP BY s.id""").fetchall()
         result = []
         for s in sites:
             row = db.execute(
@@ -960,6 +1067,8 @@ def data_overview():
 def get_alerts():
     status = request.args.get('status', '')
     limit = request.args.get('limit', 50, type=int)
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
     with get_db() as db:
         q = """
             SELECT a.*, s.name as site_name, s.code as site_code
@@ -970,6 +1079,12 @@ def get_alerts():
         if status:
             q += " AND a.status=?"
             params.append(status)
+        if date_from:
+            q += " AND a.created_at>=?"
+            params.append(date_from)
+        if date_to:
+            q += " AND a.created_at<=?"
+            params.append(date_to + ' 23:59:59')
         q += " ORDER BY CASE a.level WHEN 'red' THEN 1 WHEN 'orange' THEN 2 WHEN 'yellow' THEN 3 ELSE 4 END, a.created_at DESC LIMIT ?"
         params.append(limit)
         return jsonify([dict(r) for r in db.execute(q, params).fetchall()])
@@ -988,26 +1103,55 @@ def acknowledge_alert(alert_id):
 
 @app.route('/api/alerts/<int:alert_id>/resolve', methods=['POST'])
 def resolve_alert(alert_id):
-    """办结告警"""
+    """办结告警，支持办结原因（reason）"""
     data = request.json or {}
     operator = data.get('operator', '系统')
+    reason = data.get('reason', '办结告警')
+    remark = data.get('remark', '')
+    # reason可选值: 误报 / 仪器正常偏差 / 已自动恢复 / 已人工处理 / 自定义
+    full_remark = reason + (' - ' + remark if remark else '')
     with get_db() as db:
-        db.execute("UPDATE alerts SET status='resolved' WHERE id=?", (alert_id,))
+        db.execute("UPDATE alerts SET status='resolved', resolved_at=datetime('now','localtime') WHERE id=?", (alert_id,))
         db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
-                   ('alert', alert_id, 'resolved', operator, '办结告警'))
+                   ('alert', alert_id, 'resolved', operator, full_remark))
+        db.commit()
+        return jsonify({'success': True})
+
+@app.route('/api/alerts/<int:alert_id>/ack-resolve', methods=['POST'])
+def ack_resolve_alert(alert_id):
+    """一键确认并办结（跳过已确认状态，直接pending→resolved）"""
+    data = request.json or {}
+    operator = data.get('operator', '系统')
+    remark = data.get('remark', '一键办结')
+    with get_db() as db:
+        db.execute("UPDATE alerts SET status='resolved', resolved_at=datetime('now','localtime') WHERE id=? AND status='pending'", (alert_id,))
+        db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
+                   ('alert', alert_id, 'acknowledged', operator, '确认告警'))
+        db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
+                   ('alert', alert_id, 'resolved', operator, remark))
         db.commit()
         return jsonify({'success': True})
 
 @app.route('/api/alerts/<int:alert_id>/urge', methods=['POST'])
 def urge_alert(alert_id):
-    """告警督办"""
+    """告警督办，支持时限和协办单位"""
     data = request.json or {}
     operator = data.get('operator', '系统')
     remark = data.get('remark', '督办告警')
+    deadline = data.get('deadline', '')
+    cooperator = data.get('cooperator', '')
+    # 将额外信息拼入remark
+    extra = []
+    if deadline: extra.append('限办:'+deadline)
+    if cooperator: extra.append('协办:'+cooperator)
+    full_remark = remark + (' | ' + '; '.join(extra) if extra else '')
+    # 更新数据库中的response_deadline字段
     with get_db() as db:
         db.execute("UPDATE alerts SET urge_count=COALESCE(urge_count,0)+1, last_urged_at=datetime('now','localtime') WHERE id=?", (alert_id,))
+        if deadline:
+            db.execute("UPDATE alerts SET response_deadline=? WHERE id=?", (deadline, alert_id))
         db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
-                   ('alert', alert_id, 'urged', operator, remark))
+                   ('alert', alert_id, 'urged', operator, full_remark))
         db.commit()
         return jsonify({'success': True})
 
@@ -1053,8 +1197,8 @@ def convert_alert_to_order(alert_id):
             order_level, f"[告警转] {alert['message']}", alert['message'],
             assignee, 'pending', sla_deadline
         ))
-        # 更新告警关联工单号
-        db.execute("UPDATE alerts SET related_order_no=? WHERE id=?", (order_no, alert_id))
+        # 更新告警关联工单号 + 状态改为已确认
+        db.execute("UPDATE alerts SET related_order_no=?, status='acknowledged' WHERE id=?", (order_no, alert_id))
         # 记录时间线
         db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
                    ('alert', alert_id, 'converted', operator, f'转工单 {order_no}'))
@@ -1065,7 +1209,7 @@ def convert_alert_to_order(alert_id):
 
 @app.route('/api/alerts/batch', methods=['POST'])
 def batch_alert_operations():
-    """告警批量操作: acknowledge/urge/convert"""
+    """告警批量操作: acknowledge/resolve/urge/convert"""
     data = request.json or {}
     ids = data.get('ids', [])
     action = data.get('action', '')
@@ -1079,6 +1223,13 @@ def batch_alert_operations():
             for aid in ids:
                 db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
                            ('alert', aid, 'acknowledged', operator, '批量确认'))
+        elif action == 'resolve':
+            reason = data.get('reason', '批量办结')
+            placeholders = ','.join(['?'] * len(ids))
+            db.execute(f"UPDATE alerts SET status='resolved', resolved_at=datetime('now','localtime') WHERE id IN ({placeholders}) AND status='pending'", ids)
+            for aid in ids:
+                db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
+                           ('alert', aid, 'resolved', operator, reason))
         elif action == 'urge':
             remark = data.get('remark', '批量督办')
             for aid in ids:
@@ -1101,7 +1252,7 @@ def batch_alert_operations():
                     VALUES (?,?,?,?,?,?,?,?,?)
                 """, (order_no, alert['site_id'], 'auto', '告警批量转工单', order_level,
                       f"[告警转] {alert['message']}", alert['message'], 'pending', sla_deadline))
-                db.execute("UPDATE alerts SET related_order_no=? WHERE id=?", (order_no, aid))
+                db.execute("UPDATE alerts SET related_order_no=?, status='acknowledged' WHERE id=?", (order_no, aid))
                 db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
                            ('alert', aid, 'converted', operator, f'批量转工单 {order_no}'))
         else:
@@ -1130,14 +1281,24 @@ def get_timeline():
 
 @app.route('/api/alerts/statistics')
 def alert_statistics():
+    status = request.args.get('status', '')
+    status_where = ''
+    params = []
+    if status:
+        status_where = ' WHERE status=?'
+        params.append(status)
     with get_db() as db:
-        total = db.execute("SELECT COUNT(*) as c FROM alerts").fetchone()['c']
+        total = db.execute(f"SELECT COUNT(*) as c FROM alerts{status_where}", params).fetchone()['c']
         by_level = {}
         for lv in ['red','orange','yellow','blue']:
-            by_level[lv] = db.execute("SELECT COUNT(*) as c FROM alerts WHERE level=?",(lv,)).fetchone()['c']
+            lv_params = params + [lv]
+            by_level[lv] = db.execute(f"SELECT COUNT(*) as c FROM alerts{status_where + ' AND level=?' if status else ' WHERE level=?'}", lv_params).fetchone()['c']
         by_status = {}
-        for st in ['pending','acknowledged','resolved']:
-            by_status[st] = db.execute("SELECT COUNT(*) as c FROM alerts WHERE status=?",(st,)).fetchone()['c']
+        if not status:
+            for st in ['pending','acknowledged','resolved']:
+                by_status[st] = db.execute("SELECT COUNT(*) as c FROM alerts WHERE status=?",(st,)).fetchone()['c']
+        else:
+            by_status[status] = total
         return jsonify({'total':total, 'by_level':by_level, 'by_status':by_status})
 
 # --- Work Orders ---
@@ -1317,6 +1478,38 @@ def inspection_statistics():
             'abnormal_count':abnormal
         })
 
+
+@app.route('/api/workorders/<order_no>', methods=['DELETE'])
+def delete_workorder(order_no):
+    """删除工单（仅支持待受理或已关闭的工单）"""
+    with get_db() as db:
+        cur = db.execute('SELECT status FROM work_orders WHERE order_no=?', (order_no,)).fetchone()
+        if not cur:
+            return jsonify({'error': 'not found'}), 404
+        if cur['status'] not in ('pending', 'closed'):
+            return jsonify({'error': '只能删除待受理或已关闭的工单'}), 400
+        db.execute('DELETE FROM work_orders WHERE order_no=?', (order_no,))
+        db.execute("DELETE FROM timeline_events WHERE source_type='workorder' AND source_id=?", (order_no,))
+        db.commit()
+        return jsonify({'success': True})
+
+# --- Maintenance Templates ---
+@app.route('/api/maintenance/templates')
+def get_maintenance_templates():
+    """返回所有运维模板"""
+    with get_db() as db:
+        rows = db.execute("SELECT * FROM maintenance_templates ORDER BY sort_order").fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            if d['check_items']:
+                try:
+                    d['check_items'] = json.loads(d['check_items'])
+                except:
+                    d['check_items'] = []
+            result.append(d)
+        return jsonify(result)
+
 # --- Maintenance Plans ---
 @app.route('/api/maintenance/plans')
 def get_maintenance_plans():
@@ -1341,18 +1534,44 @@ def get_maintenance_plans():
 @app.route('/api/maintenance/plans', methods=['POST'])
 def create_maintenance_plan():
     data = request.json
+    template_id = data.get('template_id')
     with get_db() as db:
-        cur = db.execute(
-            "INSERT INTO maintenance_plans (site_id,plan_name,category,frequency,due_date,assignee) VALUES (?,?,?,?,?,?)",
-            (data['site_id'], data['plan_name'], data['category'], data.get('frequency','monthly'), data.get('due_date'), data.get('assignee'))
-        )
+        if template_id:
+            # 从模板自动填充
+            tpl = db.execute("SELECT * FROM maintenance_templates WHERE id=?", (template_id,)).fetchone()
+            if tpl:
+                site_name = db.execute("SELECT name FROM sites WHERE id=?", (data['site_id'],)).fetchone()
+                site_label = site_name['name'] if site_name else ''
+                plan_name = data.get('plan_name') or f"{tpl['title']}-{site_label}"
+                category = tpl['category']
+                frequency = tpl['frequency']
+                sub_category = tpl['sub_category']
+                remark = data.get('remark') or tpl['description']
+                cur = db.execute(
+                    "INSERT INTO maintenance_plans (site_id,plan_name,category,frequency,due_date,assignee,template_id,sub_category,remark) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (data['site_id'], plan_name, category, frequency, data.get('due_date'), data.get('assignee'), template_id, sub_category, remark)
+                )
+            else:
+                return jsonify({'error': 'template not found'}), 404
+        else:
+            # 无模板的传统创建方式
+            cur = db.execute(
+                "INSERT INTO maintenance_plans (site_id,plan_name,category,frequency,due_date,assignee) VALUES (?,?,?,?,?,?)",
+                (data['site_id'], data['plan_name'], data['category'], data.get('frequency','monthly'), data.get('due_date'), data.get('assignee'))
+            )
         db.commit()
         return jsonify({'success': True, 'plan_id': cur.lastrowid})
 
 @app.route('/api/maintenance/plans/<int:plan_id>/complete', methods=['PUT'])
 def complete_maintenance_plan(plan_id):
+    data = request.json or {}
+    check_results = data.get('check_results')
     with get_db() as db:
-        db.execute("UPDATE maintenance_plans SET status='completed', completed_at=datetime('now','localtime') WHERE id=?", (plan_id,))
+        if check_results:
+            db.execute("UPDATE maintenance_plans SET status='completed', completed_at=datetime('now','localtime'), check_results=? WHERE id=?",
+                       (json.dumps(check_results, ensure_ascii=False), plan_id))
+        else:
+            db.execute("UPDATE maintenance_plans SET status='completed', completed_at=datetime('now','localtime') WHERE id=?", (plan_id,))
         db.commit()
         # 记录时间线
         db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator) VALUES (?,?,?,?)",
@@ -2008,6 +2227,7 @@ if __name__ == '__main__':
     seed_inspections()
     seed_alerts()
     seed_maintenance()
+    seed_maintenance_templates()
     backfill_history(72)
     # 生成初始数据（让趋势跟踪生效）
     for _ in range(6):
@@ -2016,6 +2236,26 @@ if __name__ == '__main__':
                 generate_sensor_data()
         except Exception as e:
             print(f'[Seed] 初始数据生成跳过: {e}')
+    # 预置少量固定离线站点（在初始数据生成之后执行，确保不被覆盖）
+    try:
+        with get_db() as db:
+            for sid in [5, 108, 193]:
+                db.execute("UPDATE device_shadows SET status='offline', last_data_time=NULL WHERE site_id=?", (sid,))
+                site = db.execute("SELECT name FROM sites WHERE id=?", (sid,)).fetchone()
+                if site: print(f"[Seed] 预设离线站点: {site['name']} (id={sid})")
+            db.commit()
+    except Exception as e:
+        print(f"[Seed] 预设离线站点跳过: {e}")
+    # 清理过量的已办结告警（只保留最近1天的）
+    try:
+        with get_db() as db:
+            total = db.execute("SELECT COUNT(*) as c FROM alerts WHERE status='resolved'").fetchone()['c']
+            if total > 200:
+                db.execute("DELETE FROM alerts WHERE status='resolved' AND created_at < datetime('now','-1 day')")
+                db.commit()
+                print(f"[Cleanup] 清理过量已办结告警: 删除前{total}条，保留最近1天记录")
+    except Exception as e:
+        print(f"[Cleanup] 告警清理跳过: {e}")
     # 每30秒自动生成数据
     scheduler.add_job(generate_sensor_data, 'interval', seconds=30, id='simulator')
     print("[Server] 水利运维智慧运营平台 启动成功!")
