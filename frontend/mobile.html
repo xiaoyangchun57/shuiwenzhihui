@@ -71,11 +71,11 @@ body{
 .header-weather{font-size:12px;color:var(--text-tertiary);margin-bottom:var(--space-md)}
 .header-weather-row{display:flex;align-items:flex-end;justify-content:space-between}
 .weather-icon-big{font-size:68px;line-height:1}
-.todo-count-wrap{display:flex;align-items:baseline;gap:4px}
+.todo-count-wrap{display:flex;align-items:baseline;gap:4px;justify-content:center}
 .todo-label{font-size:15px;font-weight:500;color:var(--text-primary)}
 .todo-num{font-size:32px;font-weight:700;color:var(--danger);line-height:1}
 .todo-unit{font-size:14px;color:var(--text-tertiary)}
-.todo-sub{display:flex;gap:var(--space-sm);margin-top:var(--space-sm);font-size:10px;justify-content:flex-end}
+.todo-sub{display:flex;gap:var(--space-sm);margin-top:var(--space-sm);font-size:10px;justify-content:center}
 .todo-sub span{padding:2px 8px;border-radius:10px;font-weight:500}
 .todo-sub .ts-alert{background:var(--danger-bg);color:var(--danger)}
 .todo-sub .ts-wo{background:var(--brand-light);color:var(--brand)}
@@ -289,6 +289,14 @@ body{
 /* ===== Inspection Items ===== */
 .insp-record{padding:10px 0;border-bottom:.5px solid var(--divider);font-size:12px}
 .insp-record:last-child{border-bottom:none}
+
+/* ===== Icon Wrapper (Lucide SVG) ===== */
+.i{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle}
+.i svg{width:100%;height:100%}
+.i-sm{width:16px;height:16px}
+.i-md{width:20px;height:20px}
+.i-lg{width:24px;height:24px}
+.i-circle{width:12px;height:12px;border-radius:50%}
 </style>
 </head>
 <body>
@@ -318,7 +326,7 @@ body{
       <div class="header-area">
           <div style="display:flex;align-items:center;gap:var(--space-md);margin-bottom:var(--space-lg)">
             <div class="header-avatar" id="m-avatar" onclick="showUserMenu()">R</div>
-            <div class="header-search" style="flex:1"><span style="font-size:13px;flex-shrink:0">🔍</span><input id="m-search-inp" placeholder="搜索站点/工单/预警/巡检..." oninput="globalSearch()" style="border:none;background:transparent;outline:none;font-size:13px;color:var(--text-primary);flex:1;width:0"></div>
+            <div class="header-search" style="flex:1"><span class="i i-sm" style="color:var(--text-tertiary);margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input id="m-search-inp" placeholder="搜索站点/工单/预警/巡检..." oninput="globalSearch()" style="border:none;background:transparent;outline:none;font-size:13px;color:var(--text-primary);flex:1;width:0"></div>
           </div>
         <div class="header-date"><span id="m-date">-</span> · <span id="m-weekday">-</span></div>
         <div class="header-weather"><span id="m-w-text">--</span></div>
@@ -344,16 +352,16 @@ body{
       <!-- Quick Actions -->
       <div class="quick-row">
         <div class="quick-btn" onclick="openPartsApply()">
-          <div class="quick-folder green"></div><span class="quick-btn-label">备件申请</span>
+          <img src="/icons/备件申请.svg" style="width:44px;height:44px"><span class="quick-btn-label">备件申请</span>
         </div>
         <div class="quick-btn" onclick="openManuals()">
-          <div class="quick-folder purple"></div><span class="quick-btn-label">运维规范</span>
+          <img src="/icons/运维规范.svg" style="width:44px;height:44px"><span class="quick-btn-label">运维规范</span>
         </div>
         <div class="quick-btn" onclick="loadInspections()">
-          <div class="quick-folder"></div><span class="quick-btn-label">巡检清单</span>
+          <img src="/icons/巡检计划.svg" style="width:44px;height:44px"><span class="quick-btn-label">巡检清单</span>
         </div>
         <div class="quick-btn" onclick="openOrdersList()">
-          <div class="quick-folder orange"></div><span class="quick-btn-label">我的工单</span>
+          <img src="/icons/我的工单.svg" style="width:44px;height:44px"><span class="quick-btn-label">我的工单</span>
         </div>
       </div>
 
@@ -389,9 +397,9 @@ body{
       <!-- Level filter tabs -->
       <div class="site-tabs" id="al-level-tabs" style="padding-top:var(--space-sm)">
         <div class="site-tab active" onclick="filterAlLevel('')">全部</div>
-        <div class="site-tab" onclick="filterAlLevel('red')">🔴 红色</div>
-        <div class="site-tab" onclick="filterAlLevel('orange')">🟠 橙色</div>
-        <div class="site-tab" onclick="filterAlLevel('yellow')">🟡 黄色</div>
+        <div class="site-tab" onclick="filterAlLevel('red')"><span class="i i-circle" style="background:var(--danger);margin-right:4px"></span>红色</div>
+        <div class="site-tab" onclick="filterAlLevel('orange')"><span class="i i-circle" style="background:var(--warning);margin-right:4px"></span>橙色</div>
+        <div class="site-tab" onclick="filterAlLevel('yellow')"><span class="i i-circle" style="background:#ffd000;margin-right:4px"></span>黄色</div>
       </div>
       <!-- Status filter tabs -->
       <div class="site-tabs" id="al-status-tabs">
@@ -414,9 +422,9 @@ body{
 
   <!-- TabBar -->
   <div class="tabbar" id="bottom-nav">
-    <div class="tab-item active" id="bn-home" onclick="switchTab('home')"><div class="tab-icon">⭐</div><span class="tab-label">首页</span></div>
-    <div class="tab-item" id="bn-sites" onclick="switchTab('sites')"><div class="tab-icon">⚙️</div><span class="tab-label">站点管理</span></div>
-    <div class="tab-item" id="bn-alerts" onclick="switchTab('alerts')"><div class="tab-icon">⚠️</div><span class="tab-label">预警中心</span></div>
+    <div class="tab-item active" id="bn-home" onclick="switchTab('home')"><div class="tab-icon i i-lg"><img src="/icons/首页.svg" style="width:100%;height:100%"></div><span class="tab-label">首页</span></div>
+    <div class="tab-item" id="bn-sites" onclick="switchTab('sites')"><div class="tab-icon i i-lg"><img src="/icons/站点管理.svg" style="width:100%;height:100%"></div><span class="tab-label">站点管理</span></div>
+    <div class="tab-item" id="bn-alerts" onclick="switchTab('alerts')"><div class="tab-icon i i-lg"><img src="/icons/预警中心.svg" style="width:100%;height:100%"></div><span class="tab-label">预警中心</span></div>
   </div>
 
   <!-- Bottom Sheet: Resolve Reason -->
@@ -439,7 +447,7 @@ body{
     <div class="iv-header">
       <span class="back" onclick="closeSiteDetail()">←</span>
       <span class="iv-title" id="sd-name">-</span>
-      <span class="iv-header-extra" onclick="navigateToSite()">🧭 导航</span>
+      <span class="iv-header-extra" onclick="navigateToSite()"><span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span>导航</span>
     </div>
     <div class="sd-subtabs">
       <div class="sd-subtab active" onclick="switchSdTab(0)">设备运行</div>
@@ -486,16 +494,16 @@ body{
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
           <div id="check-photo-preview" style="display:none;position:relative">
             <img id="check-photo-img" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:.5px solid var(--border-color)">
-            <span onclick="_clearCheckPhoto()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--danger);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer">✕</span>
+            <span onclick="_clearCheckPhoto()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--danger);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
           </div>
           <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:.5px dashed var(--border-color);border-radius:6px;font-size:12px;color:var(--brand);cursor:pointer">
-            📷 拍照/上传
+            <span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>拍照/上传
             <input type="file" accept="image/*" capture="environment" style="display:none" onchange="_onCheckPhoto(this)">
           </label>
         </div>
       </div>
       <!-- GPS -->
-      <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:12px" id="check-gps">📍 定位获取中...</div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:12px" id="check-gps"><span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>定位获取中...</div>
       <!-- 异常转工单选项 -->
       <label id="check-wo-option" style="display:none;align-items:center;gap:6px;font-size:13px;color:var(--text-primary);margin-bottom:12px;cursor:pointer">
         <input type="checkbox" id="check-create-wo" style="width:16px;height:16px"> 同时生成异常工单
@@ -562,6 +570,25 @@ var SM={pending:'待受理',accepted:'已受理',generated:'',dispatched:'',in_p
 var WO_PCT={pending:0,accepted:15,generated:0,dispatched:0,in_progress:40,reviewing:70,acceptance:90,closed:100};
 var OB={pending:'#999',accepted:'#07C160',generated:'#999',dispatched:'#999',in_progress:'#ffa040',reviewing:'#2196F3',acceptance:'#07C160',closed:'#999'};
 var SB_CLASS={pending:'sb-pending',accepted:'sb-process',generated:'sb-pending',dispatched:'sb-pending',in_progress:'sb-warning',reviewing:'sb-info',acceptance:'sb-process',closed:'sb-done'};
+
+// ===== SVG Icons (Lucide 风格, 24px grid) =====
+var ICONS={
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  camera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+  mapPin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+  navigation:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>',
+  clipboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  paperclip:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>',
+  wifi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg>',
+  wifiOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg>',
+  invoice:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+  circle:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>',
+};
 
 // ===== Auth =====
 var _token='',_user=null;
@@ -745,7 +772,7 @@ function renderSitePanel(){
   var html='<div class="stats-row"><div class="stat-box"><div class="sn">'+allSites.length+'</div><div class="sl">监测站点</div></div><div class="stat-box"><div class="sn">'+online+'</div><div class="sl">在线</div></div><div class="stat-box warning"><div class="sn">'+offline+'</div><div class="sl">离线</div></div><div class="stat-box danger"><div class="sn">'+alertCount+'</div><div class="sl">告警</div></div></div>';
   var sorted=[].concat(allSites);sorted.sort(function(a,b){var ap=pinnedSites.indexOf(a.id),bp=pinnedSites.indexOf(b.id);if(ap>=0&&bp<0)return -1;if(bp>=0&&ap<0)return 1;return(a.status==='offline'?0:1)-(b.status==='offline'?0:1)});
   if(!sorted.length)html+='<div class="empty">暂无站点数据</div>';
-  else for(var i=0;i<Math.min(sorted.length,20);i++){var s=sorted[i],pinned=pinnedSites.indexOf(s.id)>=0;html+='<div class="sm-item" onclick="showSiteDetail('+s.id+')"><span class="sm-dot '+(s.status==='online'?'dot-online':'dot-offline')+'"></span><div class="sm-info"><div class="sm-name">'+(pinned?'📌 ':'')+s.name+'</div><div class="sm-meta">'+(TM[s.type]||s.type)+' · '+s.district+'</div></div><span class="sm-pin'+(pinned?' pinned':'')+'" onclick="event.stopPropagation();togglePin('+s.id+')">📌</span></div>'}
+  else for(var i=0;i<Math.min(sorted.length,20);i++){var s=sorted[i],pinned=pinnedSites.indexOf(s.id)>=0;html+='<div class="sm-item" onclick="showSiteDetail('+s.id+')"><span class="sm-dot '+(s.status==='online'?'dot-online':'dot-offline')+'"></span><div class="sm-info"><div class="sm-name">'+s.name+'</div><div class="sm-meta">'+(TM[s.type]||s.type)+' · '+s.district+'</div></div><span class="sm-pin'+(pinned?' pinned':'')+'" onclick="event.stopPropagation();togglePin('+s.id+')"><img src="/icons/'+(pinned?'收藏（站点监测里的站点置顶功能）.svg':'未收藏（站点监测里的站点置顶功能）.svg')+'" style="width:18px;height:18px"></span></div>'}
   document.getElementById('swipe-panel-1').innerHTML=html;
 }
 function togglePin(sid){
@@ -828,7 +855,7 @@ function globalSearch(){
   if(als.length){html+=_searchGroup('预警',als.slice(0,5),function(a){return '<span class="level-dot level-'+a.level+'"></span>'+a.message+' <span style="font-size:10px;color:var(--text-tertiary)">'+a.site_name+'</span>'});cnt+=als.length}
   // Search inspections
   var ips=allInsp.filter(function(p){return p.plan_name.toLowerCase().includes(kw)||p.site_name.toLowerCase().includes(kw)});
-  if(ips.length){html+=_searchGroup('巡检',ips.slice(0,5),function(p){return '📋 '+p.plan_name+' <span style="font-size:10px;color:var(--text-tertiary)">'+p.site_name+' · '+(p.start_date||'')+'</span>'});cnt+=ips.length}
+  if(ips.length){html+=_searchGroup('巡检',ips.slice(0,5),function(p){return '<span class="i i-sm" style="margin-right:4px;color:var(--text-tertiary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>'+p.plan_name+' <span style="font-size:10px;color:var(--text-tertiary)">'+p.site_name+' · '+(p.start_date||'')+'</span>'});cnt+=ips.length}
   if(!cnt){html+='<div class="empty">未找到匹配结果</div>'}
   document.getElementById('search-results-body').innerHTML=html;
   document.getElementById('search-results').classList.add('open');
@@ -871,7 +898,7 @@ async function showSiteDetail(sid){
   if(_siteDevices[sid].length){
     for(var i=0;i<_siteDevices[sid].length;i++){
       var dv=_siteDevices[sid][i],isOn=dv.status==='online';
-      h0+='<div class="sd-dev-item'+(isOn?'':' sd-dev-offline')+'"'+(isOn?'':' onclick="handleAbnormalDevice(\''+dv.device_name+'\',\''+dv.device_code+'\')"')+'><span class="sd-dev-name">'+dv.device_name+' <span style="color:var(--text-tertiary);font-size:10px">'+dv.device_code+'</span></span><span class="'+(isOn?'dev-status-online':'dev-status-offline')+'">'+(isOn?'🟢 在线':'🔴 离线')+'</span>';
+      h0+='<div class="sd-dev-item'+(isOn?'':' sd-dev-offline')+'"'+(isOn?'':' onclick="handleAbnormalDevice(\''+dv.device_name+'\',\''+dv.device_code+'\')"')+'><span class="sd-dev-name">'+dv.device_name+' <span style="color:var(--text-tertiary);font-size:10px">'+dv.device_code+'</span></span><span class="'+(isOn?'dev-status-online':'dev-status-offline')+'"><span class="i i-sm" style="margin-right:2px">'+(isOn?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg>')+'</span>'+(isOn?' 在线':' 离线')+'</span>';
       h0+='</div>';
     }
   }else{h0+='<div class="empty" style="padding:10px">暂无设备数据</div>'}
@@ -987,14 +1014,14 @@ function renderAlertList(){
   if(!list.length)html='<div class="empty">暂无预警</div>';
   else for(var i=0;i<list.length;i++){
     var a=list[i],chk=_selectedAlerts[a.id]?' checked':'';
-    html+='<div class="al-item"><span class="al-check'+(chk?' checked':'')+'" onclick="event.stopPropagation();toggleAlertSelect('+a.id+');" id="chk-'+a.id+'">'+(chk?'✓':'')+'</span><span class="level-dot level-'+a.level+'"></span><span class="al-info" onclick="openAlertDetail('+a.id+')"><div class="al-msg">'+a.message+'</div><div class="al-site">'+a.site_name+'</div></span><span class="al-time">'+(a.created_at||'').substring(5,16)+'</span></div>';
+    html+='<div class="al-item"><span class="al-check'+(chk?' checked':'')+'" onclick="event.stopPropagation();toggleAlertSelect('+a.id+');" id="chk-'+a.id+'">'+(chk?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</span><span class="level-dot level-'+a.level+'"></span><span class="al-info" onclick="openAlertDetail('+a.id+')"><div class="al-msg">'+a.message+'</div><div class="al-site">'+a.site_name+'</div></span><span class="al-time">'+(a.created_at||'').substring(5,16)+'</span></div>';
   }
   document.getElementById('alerts-list').innerHTML=html;
 }
 function toggleAlertSelect(id){
   if(_selectedAlerts[id])delete _selectedAlerts[id];else _selectedAlerts[id]=true;
   var el=document.getElementById('chk-'+id);
-  if(el){if(_selectedAlerts[id]){el.classList.add('checked');el.textContent='✓'}else{el.classList.remove('checked');el.textContent=''}}
+  if(el){if(_selectedAlerts[id]){el.classList.add('checked');el.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px"><polyline points="20 6 9 17 4 12"/></svg>'}else{el.classList.remove('checked');el.innerHTML=''}}
   updateBatchBar();
 }
 function updateBatchBar(){
@@ -1087,7 +1114,7 @@ async function openWoDetail(orderNo){
   var acts=getWOActions(s);
   if(acts.length){html+='<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">';for(var i=0;i<acts.length;i++){html+='<button class="btn-sm" style="background:'+acts[i].bg+';color:#fff" onclick="doWOAction(\''+orderNo+'\',\''+acts[i].st+'\')">'+acts[i].label+'</button>'}html+='</div>'}
   // Photo upload
-  html+='<div style="margin-top:12px;padding:10px;background:var(--bg-primary);border-radius:8px;font-size:12px;color:var(--text-secondary)"><div style="margin-bottom:6px;font-weight:500">📷 上传凭证（可选）</div><div style="display:flex;gap:8px;align-items:center"><input type="file" id="wo-photo-'+orderNo+'" accept="image/*" capture="environment" style="flex:1;font-size:11px" onchange="_previewPhoto(this,\'preview-'+orderNo+'\')"><div id="preview-'+orderNo+'" style="width:56px;height:56px;border-radius:6px;border:1px dashed var(--border-color);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-tertiary);overflow:hidden;flex-shrink:0;background:var(--bg-card)">预览</div></div></div>';
+  html+='<div style="margin-top:12px;padding:10px;background:var(--bg-primary);border-radius:8px;font-size:12px;color:var(--text-secondary)"><div style="margin-bottom:6px;font-weight:500;display:flex;align-items:center;gap:4px"><span class="i i-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>上传凭证（可选）</div><div style="display:flex;gap:8px;align-items:center"><input type="file" id="wo-photo-'+orderNo+'" accept="image/*" capture="environment" style="flex:1;font-size:11px" onchange="_previewPhoto(this,\'preview-'+orderNo+'\')"><div id="preview-'+orderNo+'" style="width:56px;height:56px;border-radius:6px;border:1px dashed var(--border-color);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-tertiary);overflow:hidden;flex-shrink:0;background:var(--bg-card)">预览</div></div></div>';
   // 流转时间线
   try{
     var tl=await af('/timeline?source_type=order&limit=50');
@@ -1095,7 +1122,7 @@ async function openWoDetail(orderNo){
       var tlItems=tl.filter(function(e){return e.remark&&e.remark.indexOf(orderNo)>=0});
       if(tlItems.length){
         var TL_CN={created:'创建',accepted:'已受理',in_progress:'处置中',reviewing:'待验收',acceptance:'已验收',closed:'已办结'};
-        html+='<div class="iv-card" style="margin-top:12px"><div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:8px">📋 流转记录</div>';
+        html+='<div class="iv-card" style="margin-top:12px"><div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span class="i i-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>流转记录</div>';
         for(var i=0;i<tlItems.length;i++){
           var e=tlItems[i];
           html+='<div style="display:flex;gap:8px;padding:6px 0;border-left:2px solid var(--brand);padding-left:12px;margin-bottom:4px;position:relative">'
@@ -1256,13 +1283,13 @@ async function openInspItems(pid){
   _inspListMode=true;
   var tasks=await af('/inspections/'+pid+'/tasks');inspData[pid]=tasks||[];
   var html='<div class="iv-card"><div style="font-size:14px;font-weight:500;color:var(--text-primary)">'+plan.plan_name+'</div><div style="font-size:11px;color:var(--text-tertiary)">'+plan.site_name+'</div></div>';
-  if(tasks){for(var i=0;i<tasks.length;i++){var t=tasks[i],done=!!t.result,isAb=t.result==='abnormal';html+='<div class="iv-card" id="ck-item-'+t.id+'" style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0;background:'+(done?(isAb?'var(--danger)':'var(--brand)'):'var(--bg-primary)')+'">'+(done?(isAb?'✕':'✓'):(i+1))+'</span><div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--text-primary)">'+t.check_item+'</div>'+(t.remark?'<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">备注: '+t.remark+'</div>':'')+'</div>'+(done?('<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;align-items:flex-end"><span style="font-size:11px;white-space:nowrap;color:'+(isAb?'var(--danger)':'var(--brand)')+'">'+(isAb?'异常':'正常')+'</span>'+(isAb?'<button class="btn-sm" style="background:var(--danger-bg);color:var(--danger);font-size:11px;padding:4px 8px" onclick="event.stopPropagation();_createWOFromInspection('+t.id+','+plan.site_id+',\''+t.check_item.replace(/'/g,"\\'")+'\',\''+(plan.site_name||'').replace(/'/g,"\\'")+'\')">⚠ 转工单</button>':'')+'</div>'):'<div style="display:flex;gap:4px;flex-shrink:0"><button class="btn-sm" style="background:var(--brand-light);color:var(--brand)" onclick="checkItem('+t.id+',\'normal\',\''+t.check_item.replace(/'/g,"\\'")+'\')">正常</button><button class="btn-sm" style="background:var(--danger-bg);color:var(--danger)" onclick="checkItem('+t.id+',\'abnormal\',\''+t.check_item.replace(/'/g,"\\'")+'\')">异常</button></div>')+'</div>'}
+  if(tasks){for(var i=0;i<tasks.length;i++){var t=tasks[i],done=!!t.result,isAb=t.result==='abnormal';html+='<div class="iv-card" id="ck-item-'+t.id+'" style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0;background:'+(done?(isAb?'var(--danger)':'var(--brand)'):'var(--bg-primary)')+'">'+(done?(isAb?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:10px;height:10px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px"><polyline points="20 6 9 17 4 12"/></svg>'):(i+1))+'</span><div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--text-primary)">'+t.check_item+'</div>'+(t.remark?'<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">备注: '+t.remark+'</div>':'')+'</div>'+(done?('<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;align-items:flex-end"><span style="font-size:11px;white-space:nowrap;color:'+(isAb?'var(--danger)':'var(--brand)')+'">'+(isAb?'异常':'正常')+'</span>'+(isAb?'<button class="btn-sm" style="background:var(--danger-bg);color:var(--danger);font-size:11px;padding:4px 8px" onclick="event.stopPropagation();_createWOFromInspection('+t.id+','+plan.site_id+',\''+t.check_item.replace(/'/g,"\\'")+'\',\''+(plan.site_name||'').replace(/'/g,"\\'")+'\')"><span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>转工单</button>':'')+'</div>'):'<div style="display:flex;gap:4px;flex-shrink:0"><button class="btn-sm" style="background:var(--brand-light);color:var(--brand)" onclick="checkItem('+t.id+',\'normal\',\''+t.check_item.replace(/'/g,"\\'")+'\')">正常</button><button class="btn-sm" style="background:var(--danger-bg);color:var(--danger)" onclick="checkItem('+t.id+',\'abnormal\',\''+t.check_item.replace(/'/g,"\\'")+'\')">异常</button></div>')+'</div>'}
   }
   document.getElementById('insp-checklist-body').innerHTML=html;
   // 提示操作指引
   var hasPending=false;
   if(tasks){for(var i=0;i<tasks.length;i++){if(!tasks[i].result)hasPending=true}}
-  if(!hasPending)showToast('所有检查项已完成 ✓')
+  if(!hasPending)showToast('所有检查项已完成')
 }
 async function checkItem(taskId,result,itemName){
   // 打开自定义弹窗
@@ -1282,18 +1309,18 @@ async function checkItem(taskId,result,itemName){
   if(result==='abnormal'){woOption.style.display='flex';document.getElementById('check-create-wo').checked=true}
   else{woOption.style.display='none';document.getElementById('check-create-wo').checked=false}
   // 获取GPS
-  document.getElementById('check-gps').textContent='📍 定位获取中...';
+  document.getElementById('check-gps').innerHTML='<span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>定位获取中...';
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(function(pos){
       _checkGps={lat:pos.coords.latitude,lng:pos.coords.longitude};
-      document.getElementById('check-gps').textContent='📍 '+pos.coords.latitude.toFixed(4)+', '+pos.coords.longitude.toFixed(4);
+      document.getElementById('check-gps').innerHTML='<span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>'+pos.coords.latitude.toFixed(4)+', '+pos.coords.longitude.toFixed(4);
     },function(){
       _checkGps=null;
-      document.getElementById('check-gps').textContent='📍 定位不可用（可选）';
+      document.getElementById('check-gps').innerHTML='<span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>定位不可用（可选）';
     },{timeout:5000});
   }else{
     _checkGps=null;
-    document.getElementById('check-gps').textContent='📍 定位不可用（可选）';
+    document.getElementById('check-gps').innerHTML='<span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>定位不可用（可选）';
   }
   overlay.style.display='flex';
 }
