@@ -37,12 +37,16 @@ find_bad_brace.py
 
 # Project-specific excludes
 *.bak
-frontend/fix.py
-frontend/css/
-frontend/js/
+# 旧版前端文件（已废弃，仅保留引用作记录）
+frontend/js/app.js
 frontend/index.html
-mobile/
+mobile/index.html
+# 文档
 documents/
+# 设计素材（未被页面直接引用）
+素材/
+# 上传缓存
+frontend/uploads/
 
 # WorkBuddy AI development metadata
 .workbuddy/

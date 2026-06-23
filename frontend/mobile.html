@@ -351,7 +351,7 @@ body{
       <div class="header-area">
           <div style="display:flex;align-items:center;gap:var(--space-md);margin-bottom:var(--space-lg)">
             <div class="header-avatar" id="m-avatar" onclick="showUserMenu()">R</div>
-            <div class="header-search" style="flex:1"><span class="i i-sm" style="color:var(--text-tertiary);margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input id="m-search-inp" placeholder="搜索站点/工单/预警/巡检..." oninput="globalSearch()" style="border:none;background:transparent;outline:none;font-size:13px;color:var(--text-primary);flex:1;width:0"></div>
+            <div class="header-search" style="flex:1"><span class="i i-sm" style="color:var(--text-tertiary);margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input id="m-search-inp" placeholder="搜索站点/工单/预警/巡检..." oninput="dGS()" style="border:none;background:transparent;outline:none;font-size:13px;color:var(--text-primary);flex:1;width:0"></div>
           </div>
         <div class="header-date"><span id="m-date">-</span> · <span id="m-weekday">-</span> · <span id="m-district">-</span></div>
         <div class="header-weather"><span id="m-w-text">--</span></div>
@@ -608,6 +608,8 @@ body{
   <div id="toast"></div>
 </div>
 
+<script src="/shared/constants.js"></script>
+<script src="/shared/utils.js"></script>
 <script>
 window.onerror=function(msg,src,line,col,err){
   var el=document.getElementById('login-err');
@@ -615,13 +617,6 @@ window.onerror=function(msg,src,line,col,err){
 };
 
 var API='/api';
-var TM={rainfall:'雨量站',water_level:'水位站',hydrology:'水文站',soil_moisture:'墒情站',evaporation:'蒸发站',groundwater:'地下水站',station_yard:'站院'};
-var MCN={precipitation:'降雨量(mm/h)',cumulative_rainfall:'累计降雨量(mm)',water_level:'水位(m)',flow_rate:'流量(m³/s)',temperature:'温度(°C)',humidity:'湿度(%)',soil_moisture:'土壤含水量(%)',evaporation:'蒸发量(mm)',pressure:'压力(MPa)',vibration:'振动(mm/s)',battery:'电池电量(V)',signal_strength:'信号强度(dBm)'};
-function _mcn(key){return MCN[key]||key}
-var SM={pending:'待受理',accepted:'已受理',generated:'已生成',dispatched:'已派发',in_progress:'处置中',reviewing:'审核中',acceptance:'验收中',closed:'已关闭'};
-var WO_PCT={pending:0,accepted:15,generated:0,dispatched:0,in_progress:40,reviewing:70,acceptance:90,closed:100};
-var OB={pending:'#999',accepted:'#07C160',generated:'#999',dispatched:'#999',in_progress:'#ffa040',reviewing:'#2196F3',acceptance:'#07C160',closed:'#999'};
-var SB_CLASS={pending:'sb-pending',accepted:'sb-process',generated:'sb-pending',dispatched:'sb-pending',in_progress:'sb-warning',reviewing:'sb-info',acceptance:'sb-process',closed:'sb-done'};
 
 // ===== SVG Icons (Lucide 风格, 24px grid) =====
 var ICONS={
@@ -840,7 +835,7 @@ function renderWOPanel(){
   if(!active.length){html='<div class="empty">暂无进行中工单</div>'}
   else for(var j=0;j<Math.min(active.length,10);j++){
     var w=active[j],pct=WO_PCT[w.status]||0,sb=SB_CLASS[w.status]||'sb-pending';
-    html+='<div class="weui-card" onclick="openWoDetail(\''+w.order_no+'\')"><div class="card-header"><span class="card-title">'+w.title+'</span><span class="status-badge '+sb+'">'+(SM[w.status]||w.status)+'</span></div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><span class="progress-pct">'+pct+'%</span></div><div class="card-sub">'+w.site_name+'</div></div>';
+    html+='<div class="weui-card" onclick="openWoDetail('+JSON.stringify(w.order_no)+')"><div class="card-header"><span class="card-title">'+esc(w.title)+'</span><span class="status-badge '+sb+'">'+(SM[w.status]||esc(w.status))+'</span></div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><span class="progress-pct">'+pct+'%</span></div><div class="card-sub">'+esc(w.site_name)+'</div></div>';
   }
   document.getElementById('swipe-panel-0').innerHTML=html;
 }
@@ -852,7 +847,7 @@ function renderSitePanel(){
   var html='<div class="stats-row"><div class="stat-box"><div class="sn">'+allSites.length+'</div><div class="sl">监测站点</div></div><div class="stat-box"><div class="sn">'+online+'</div><div class="sl">在线</div></div><div class="stat-box warning"><div class="sn">'+offline+'</div><div class="sl">离线</div></div><div class="stat-box danger"><div class="sn">'+alertCount+'</div><div class="sl">告警</div></div></div>';
   var sorted=[].concat(allSites);sorted.sort(function(a,b){var ap=pinnedSites.indexOf(a.id),bp=pinnedSites.indexOf(b.id);if(ap>=0&&bp<0)return -1;if(bp>=0&&ap<0)return 1;return(a.status==='offline'?0:1)-(b.status==='offline'?0:1)});
   if(!sorted.length)html+='<div class="empty">暂无站点数据</div>';
-  else for(var i=0;i<Math.min(sorted.length,20);i++){var s=sorted[i],pinned=pinnedSites.indexOf(s.id)>=0;html+='<div class="sm-item" onclick="showSiteDetail('+s.id+')"><span class="sm-dot '+(s.status==='online'?'dot-online':'dot-offline')+'"></span><div class="sm-info"><div class="sm-name">'+s.name+'</div><div class="sm-meta">'+(TM[s.type]||s.type)+' · '+s.district+'</div></div><span class="sm-pin'+(pinned?' pinned':'')+'" onclick="event.stopPropagation();togglePin('+s.id+')"><img src="/icons/'+(pinned?'收藏（站点监测里的站点置顶功能）.svg':'未收藏（站点监测里的站点置顶功能）.svg')+'" style="width:18px;height:18px"></span></div>'}
+  else for(var i=0;i<Math.min(sorted.length,20);i++){var s=sorted[i],pinned=pinnedSites.indexOf(s.id)>=0;html+='<div class="sm-item" onclick="showSiteDetail('+s.id+')"><span class="sm-dot '+(s.status==='online'?'dot-online':'dot-offline')+'"></span><div class="sm-info"><div class="sm-name">'+esc(s.name)+'</div><div class="sm-meta">'+(TM[s.type]||esc(s.type))+' · '+esc(s.district)+'</div></div><span class="sm-pin'+(pinned?' pinned':'')+'" onclick="event.stopPropagation();togglePin('+s.id+')"><img src="/icons/'+(pinned?'收藏（站点监测里的站点置顶功能）.svg':'未收藏（站点监测里的站点置顶功能）.svg')+'" style="width:18px;height:18px"></span></div>'}
   document.getElementById('swipe-panel-1').innerHTML=html;
 }
 function togglePin(sid){
@@ -891,7 +886,7 @@ function _foldableSection(label,list,stateKey){
   html+='<div class="fold-body" style="overflow:hidden;transition:max-height .3s ease'+(open?';max-height:2000px':';max-height:0')+'">';
   if(list.length)for(var j=0;j<Math.min(list.length,8);j++){
     var p=list[j],pct=p.total_items?Math.round((p.completed_items||0)/p.total_items*100):0;
-    html+='<div class="weui-card" onclick="openInspItems('+p.id+')" style="margin-top:4px"><div class="card-header"><span class="card-title">'+p.plan_name+'</span><span class="status-badge '+(p.status==='in_progress'?'sb-process':'sb-pending')+'">'+(p.status==='in_progress'?'进行中':'待开始')+'</span></div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><span class="progress-pct">'+pct+'%</span></div><div class="card-sub">'+p.site_name+' · '+(p.completed_items||0)+'/'+(p.total_items||0)+'项</div></div>';
+    html+='<div class="weui-card" onclick="openInspItems('+p.id+')" style="margin-top:4px"><div class="card-header"><span class="card-title">'+esc(p.plan_name)+'</span><span class="status-badge '+(p.status==='in_progress'?'sb-process':'sb-pending')+'">'+(p.status==='in_progress'?'进行中':'待开始')+'</span></div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><span class="progress-pct">'+pct+'%</span></div><div class="card-sub">'+esc(p.site_name)+' · '+(p.completed_items||0)+'/'+(p.total_items||0)+'项</div></div>';
   }
   html+='</div></div>';
   return html;
@@ -914,22 +909,23 @@ function filterSiteType(t){
   event.target.classList.add('active');renderSiteList();
 }
 function filterSites(){_siteFilterKw=document.getElementById('si-filter-inp').value.toLowerCase();renderSiteList()}
+var dGS=debounce(function(){globalSearch()},300);
 function globalSearch(){
   var kw=document.getElementById('m-search-inp').value.trim().toLowerCase();
   if(!kw){closeView('search-results');return}
   var html='<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:var(--space-sm)">搜索: "'+kw+'"</div>',cnt=0;
   // Search sites
   var ss=allSites.filter(function(s){return s.name.toLowerCase().includes(kw)||s.code.toLowerCase().includes(kw)});
-  if(ss.length){html+=_searchGroup('站点',ss.slice(0,5),function(s){return '<span class="si-dot '+(s.status==='online'?'dot-online':'dot-offline')+'"></span>'+s.name+' <span style="font-size:10px;color:var(--text-tertiary)">'+(TM[s.type]||s.type)+' · '+s.code+'</span>'});cnt+=ss.length}
+  if(ss.length){html+=_searchGroup('站点',ss.slice(0,5),function(s){return '<span class="si-dot '+(s.status==='online'?'dot-online':'dot-offline')+'"></span>'+esc(s.name)+' <span style="font-size:10px;color:var(--text-tertiary)">'+(TM[s.type]||esc(s.type))+' · '+esc(s.code)+'</span>'});cnt+=ss.length}
   // Search WOs
   var wos=allWO.filter(function(w){return w.title.toLowerCase().includes(kw)||w.site_name.toLowerCase().includes(kw)||(w.order_no||'').toLowerCase().includes(kw)});
-  if(wos.length){html+=_searchGroup('工单',wos.slice(0,5),function(w){return '<span class="level-dot level-'+(w.level==='critical'?'red':'yellow')+'"></span>'+w.title+' <span style="font-size:10px;color:var(--text-tertiary)">'+(w.order_no||'')+' · '+(SM[w.status]||w.status)+'</span>'});cnt+=wos.length}
+  if(wos.length){html+=_searchGroup('工单',wos.slice(0,5),function(w){return '<span class="level-dot level-'+(w.level==='critical'?'red':'yellow')+'"></span>'+esc(w.title)+' <span style="font-size:10px;color:var(--text-tertiary)">'+esc(w.order_no||'')+' · '+(SM[w.status]||esc(w.status))+'</span>'});cnt+=wos.length}
   // Search alerts
   var als=allAlerts.filter(function(a){return a.message.toLowerCase().includes(kw)||a.site_name.toLowerCase().includes(kw)});
-  if(als.length){html+=_searchGroup('预警',als.slice(0,5),function(a){return a.message+' <span style="font-size:10px;color:var(--text-tertiary)">'+a.site_name+'</span>'});cnt+=als.length}
+  if(als.length){html+=_searchGroup('预警',als.slice(0,5),function(a){return esc(a.message)+' <span style="font-size:10px;color:var(--text-tertiary)">'+esc(a.site_name)+'</span>'});cnt+=als.length}
   // Search inspections
   var ips=allInsp.filter(function(p){return p.plan_name.toLowerCase().includes(kw)||p.site_name.toLowerCase().includes(kw)});
-  if(ips.length){html+=_searchGroup('巡检',ips.slice(0,5),function(p){return '<span class="i i-sm" style="margin-right:4px;color:var(--text-tertiary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>'+p.plan_name+' <span style="font-size:10px;color:var(--text-tertiary)">'+p.site_name+' · '+(p.start_date||'')+'</span>'});cnt+=ips.length}
+  if(ips.length){html+=_searchGroup('巡检',ips.slice(0,5),function(p){return '<span class="i i-sm" style="margin-right:4px;color:var(--text-tertiary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>'+esc(p.plan_name)+' <span style="font-size:10px;color:var(--text-tertiary)">'+esc(p.site_name)+' · '+esc(p.start_date||'')+'</span>'});cnt+=ips.length}
   if(!cnt){html+='<div class="empty">未找到匹配结果</div>'}
   document.getElementById('search-results-body').innerHTML=html;
   document.getElementById('search-results').classList.add('open');
@@ -947,7 +943,7 @@ function renderSiteList(){
   if(_siteFilterKw)list=list.filter(function(s){return s.name.toLowerCase().includes(_siteFilterKw)||s.code.toLowerCase().includes(_siteFilterKw)});
   var html='';
   if(!list.length)html='<div class="empty">无匹配站点</div>';
-  else for(var i=0;i<list.length;i++){var s=list[i];html+='<div class="si-item" onclick="showSiteDetail('+s.id+')"><span class="si-dot '+(s.status==='online'?'dot-online':'dot-offline')+'"></span><div class="si-info"><div class="si-name">'+s.name+'</div><div class="si-meta">'+(TM[s.type]||s.type)+' · 设备:'+(s.device_count||0)+'台</div></div><span class="si-arrow">›</span></div>'}
+  else for(var i=0;i<list.length;i++){var s=list[i];html+='<div class="si-item" onclick="showSiteDetail('+s.id+')"><span class="si-dot '+(s.status==='online'?'dot-online':'dot-offline')+'"></span><div class="si-info"><div class="si-name">'+esc(s.name)+'</div><div class="si-meta">'+(TM[s.type]||esc(s.type))+' · 设备:'+(s.device_count||0)+'台</div></div><span class="si-arrow">›</span></div>'}
   document.getElementById('site-list').innerHTML=html;
 }
 
@@ -972,7 +968,7 @@ async function showSiteDetail(sid){
   if(_siteDevices[sid].length){
     for(var i=0;i<_siteDevices[sid].length;i++){
       var dv=_siteDevices[sid][i],isOn=dv.status==='online';
-      h0+='<div class="sd-dev-item'+(isOn?'':' sd-dev-offline')+'"'+(isOn?'':' onclick="handleAbnormalDevice(\''+dv.device_name+'\',\''+dv.device_code+'\')"')+'><span class="sd-dev-name">'+dv.device_name+' <span style="color:var(--text-tertiary);font-size:10px">'+dv.device_code+'</span></span><span class="'+(isOn?'dev-status-online':'dev-status-offline')+'"><span class="i i-sm" style="margin-right:2px">'+(isOn?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg>')+'</span>'+(isOn?' 在线':' 离线')+'</span>';
+      h0+='<div class="sd-dev-item'+(isOn?'':' sd-dev-offline')+'"'+(isOn?'':' onclick=\'handleAbnormalDevice('+JSON.stringify(dv.device_name)+','+JSON.stringify(dv.device_code)+')\'')+'><span class="sd-dev-name">'+esc(dv.device_name)+' <span style="color:var(--text-tertiary);font-size:10px">'+esc(dv.device_code)+'</span></span><span class="'+(isOn?'dev-status-online':'dev-status-offline')+'"><span class="i i-sm" style="margin-right:2px">'+(isOn?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg>')+'</span>'+(isOn?' 在线':' 离线')+'</span>';
       h0+='</div>';
     }
   }else{h0+='<div class="empty" style="padding:10px">暂无设备数据</div>'}
@@ -1025,8 +1021,8 @@ async function showSiteDetail(sid){
   var h1='',schemes=[];try{schemes=await af('/sites/'+sid+'/schemes')||[]}catch(e){}
   if(schemes.length){
     for(var sc=0;sc<schemes.length;sc++){
-      var scm=schemes[sc],label={'daily':'日','weekly':'周','monthly':'月'}[scm.period]||scm.period;
-      h1+='<div class="sd-card"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:500">'+label+'巡检方案 · '+scm.item_count+'项</div><button class="btn-sm" style="background:var(--info);color:#fff" onclick="editSchemeItems('+scm.id+',\''+scm.period+'\',\''+sid+'\')">修改方案</button></div></div>';
+      var scm=schemes[sc],label={'daily':'日','weekly':'周','monthly':'月'}[scm.period]||esc(scm.period);
+      h1+='<div class="sd-card"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:500">'+label+'巡检方案 · '+scm.item_count+'项</div><button class="btn-sm" style="background:var(--info);color:#fff" onclick="editSchemeItems('+scm.id+','+JSON.stringify(scm.period)+','+JSON.stringify(sid)+')">修改方案</button></div></div>';
     }
   }else{
     h1+='<div class="sd-card"><div style="font-size:14px;font-weight:500;margin-bottom:8px">巡检方案</div><div class="empty" style="padding:10px;font-size:12px">还未配置方案<br><span style="color:var(--text-tertiary)">请在PC端导入或配置巡检方案</span></div></div>';
@@ -1035,7 +1031,7 @@ async function showSiteDetail(sid){
   h1+='<div class="sd-card"><div style="font-size:14px;font-weight:500;margin-bottom:10px">最近巡检记录</div>';
   if(siteInsp.length){siteInsp.sort(function(a,b){return (b.start_date||'')>(a.start_date||'')?1:-1});
     for(var i=0;i<Math.min(siteInsp.length,5);i++){var p=siteInsp[i],pct=p.total_items?Math.round((p.completed_items||0)/p.total_items*100):0;
-      h1+='<div class="insp-record" onclick="openInspItems('+p.id+')"><div style="font-weight:500;color:var(--text-primary)">'+p.plan_name+'</div><div style="color:var(--text-tertiary);font-size:11px">'+(p.start_date||'')+' ~ '+(p.end_date||'')+'</div><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><div class="progress-bar" style="flex:1;height:4px"><div class="progress-fill" style="width:'+pct+'%;height:4px"></div></div><span style="font-size:10px;color:var(--brand)">'+(p.completed_items||0)+'/'+(p.total_items||0)+'项</span></div></div>'}
+      h1+='<div class="insp-record" onclick="openInspItems('+p.id+')"><div style="font-weight:500;color:var(--text-primary)">'+esc(p.plan_name)+'</div><div style="color:var(--text-tertiary);font-size:11px">'+esc(p.start_date||'')+' ~ '+esc(p.end_date||'')+'</div><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><div class="progress-bar" style="flex:1;height:4px"><div class="progress-fill" style="width:'+pct+'%;height:4px"></div></div><span style="font-size:10px;color:var(--brand)">'+(p.completed_items||0)+'/'+(p.total_items||0)+'项</span></div></div>'}
   }else h1+='<div class="empty" style="padding:10px">暂无巡检记录</div>';
   h1+='</div>';document.getElementById('sd-panel-1').innerHTML=h1;
 }
@@ -1083,7 +1079,7 @@ function renderAlertList(keepSel){
   else for(var i=0;i<list.length;i++){
     var a=list[i],chk=_selectedAlerts[a.id]?' checked':'';
     var AL_CN={pending:'待处理',acknowledged:'已确认',resolved:'已办结'},AL_CLS={pending:'sb-pending',acknowledged:'sb-process',resolved:'sb-closed'};
-    html+='<div class="al-item"><span class="al-check'+(chk?' checked':'')+'" onclick="event.stopPropagation();toggleAlertSelect('+a.id+');" id="chk-'+a.id+'">'+(chk?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</span><span class="al-info" onclick="openAlertDetail('+a.id+')"><div class="al-msg">'+a.message+' <span class="status-badge '+AL_CLS[a.status]+'" style="font-size:9px;padding:1px 5px;vertical-align:middle">'+(AL_CN[a.status]||a.status)+'</span></div><div class="al-site">'+a.site_name+' · '+(a.created_at||'').substring(0,16)+'</div></span></div>';
+    html+='<div class="al-item"><span class="al-check'+(chk?' checked':'')+'" onclick="event.stopPropagation();toggleAlertSelect('+a.id+');" id="chk-'+a.id+'">'+(chk?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</span><span class="al-info" onclick="openAlertDetail('+a.id+')"><div class="al-msg">'+esc(a.message)+' <span class="status-badge '+AL_CLS[a.status]+'" style="font-size:9px;padding:1px 5px;vertical-align:middle">'+(AL_CN[a.status]||esc(a.status))+'</span></div><div class="al-site">'+esc(a.site_name)+' · '+(a.created_at||'').substring(0,16)+'</div></span></div>';
   }
   document.getElementById('alerts-list').innerHTML=html;
 }
@@ -1169,9 +1165,9 @@ async function openAlertDetail(aid){
   document.getElementById('alert-detail').classList.add('open');
   var AL_CN={pending:'待处理',acknowledged:'已确认',resolved:'已办结'},AL_CLS={pending:'sb-pending',acknowledged:'sb-process',resolved:'sb-closed'};
   var html='<div class="iv-card al-detail">';
-  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="status-badge '+AL_CLS[a.status]+'" style="font-size:11px">'+(AL_CN[a.status]||a.status)+'</span><span style="font-size:10px;color:var(--text-tertiary)">#'+a.id+'</span></div>';
-  html+='<div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px">'+a.message+'</div>';
-  html+='<div style="font-size:12px;color:var(--brand);margin-bottom:4px">📍 '+a.site_name+'</div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="status-badge '+AL_CLS[a.status]+'" style="font-size:11px">'+(AL_CN[a.status]||esc(a.status))+'</span><span style="font-size:10px;color:var(--text-tertiary)">#'+a.id+'</span></div>';
+  html+='<div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px">'+esc(a.message)+'</div>';
+  html+='<div style="font-size:12px;color:var(--brand);margin-bottom:4px">📍 '+esc(a.site_name)+'</div>';
   html+='<div style="font-size:11px;color:var(--text-tertiary)">'+(a.created_at||'').substring(0,16)+'</div>';
   if(a.status!=='resolved')html+='<div style="margin-top:12px;display:flex;gap:8px"><button class="btn-sm" style="background:var(--brand);color:#fff" onclick="showResolveSheet('+a.id+')">办结</button><button class="btn-sm" style="background:var(--info);color:#fff" onclick="doConvert('+a.id+')">转工单</button></div>';
   html+='</div>';
@@ -1225,9 +1221,9 @@ async function openWoDetail(orderNo){
   document.getElementById('wo-detail-body').innerHTML='<div class="loading">加载中...</div>';
   var w=allWO.find(function(x){return x.order_no===orderNo});if(!w){document.getElementById('wo-detail-body').innerHTML='<div class="empty">工单不存在</div>';return}
   var s=w.status||'pending',pct=WO_PCT[s]||0,sb=SB_CLASS[s]||'sb-pending';
-  var html='<div class="iv-card"><div style="font-size:10px;color:var(--brand);font-family:monospace">'+w.order_no+'</div><div style="font-size:15px;font-weight:600;color:var(--text-primary);margin:6px 0">'+w.title+'</div>';
-  html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"><span class="status-badge '+(w.level==='critical'?'sb-danger':'sb-info')+'">'+(w.level==='critical'?'紧急':w.level==='urgent'?'重要':'常规')+'</span><span class="status-badge '+sb+'">'+(SM[s]||s)+'</span></div>';
-  html+='<div style="font-size:12px;color:var(--text-tertiary)">站点: '+w.site_name+(w.assignee?' · 负责人: '+w.assignee:'')+(w.sla_deadline?' · SLA: '+w.sla_deadline.substring(0,10):'')+'</div>';
+  var html='<div class="iv-card"><div style="font-size:10px;color:var(--brand);font-family:monospace">'+esc(w.order_no)+'</div><div style="font-size:15px;font-weight:600;color:var(--text-primary);margin:6px 0">'+esc(w.title)+'</div>';
+  html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"><span class="status-badge '+(w.level==='critical'?'sb-danger':'sb-info')+'">'+(w.level==='critical'?'紧急':w.level==='urgent'?'重要':'常规')+'</span><span class="status-badge '+sb+'">'+(SM[s]||esc(s))+'</span></div>';
+  html+='<div style="font-size:12px;color:var(--text-tertiary)">站点: '+esc(w.site_name)+(w.assignee?' · 负责人: '+esc(w.assignee):'')+(w.sla_deadline?' · SLA: '+w.sla_deadline.substring(0,10):'')+'</div>';
   html+='<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><span class="progress-pct">'+pct+'%</span></div>';
   var acts=getWOActions(s);
   if(acts.length){html+='<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">';for(var i=0;i<acts.length;i++){html+='<button class="btn-sm" style="background:'+acts[i].bg+';color:#fff" onclick="doWOAction(\''+orderNo+'\',\''+acts[i].st+'\')">'+acts[i].label+'</button>'}html+='</div>'}
@@ -1245,8 +1241,8 @@ async function openWoDetail(orderNo){
           var e=tlItems[i];
           html+='<div style="display:flex;gap:8px;padding:6px 0;border-left:2px solid var(--brand);padding-left:12px;margin-bottom:4px;position:relative">'
             +'<div style="position:absolute;left:-5px;top:10px;width:8px;height:8px;border-radius:50%;background:var(--brand)"></div>'
-            +'<div style="flex:1"><div style="font-size:12px;color:var(--text-primary)">'+(TL_CN[e.event_type]||e.event_type)+'</div>'
-            +'<div style="font-size:10px;color:var(--text-tertiary)">'+(e.operator||'系统')+' · '+(e.created_at||'')+'</div></div></div>';
+            +'<div style="flex:1"><div style="font-size:12px;color:var(--text-primary)">'+(TL_CN[e.event_type]||esc(e.event_type))+'</div>'
+            +'<div style="font-size:10px;color:var(--text-tertiary)">'+esc(e.operator||'系统')+' · '+(e.created_at||'')+'</div></div></div>';
         }
         html+='</div>';
       }
@@ -1254,6 +1250,11 @@ async function openWoDetail(orderNo){
   }catch(e){}
   html+='</div>';document.getElementById('wo-detail-body').innerHTML=html;
 }
+// ========== 无障碍：键盘支持 ==========
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){
+  var bs=document.querySelector('.bs-overlay.open');if(bs){bs.classList.remove('open')}
+  var sd=document.getElementById('sd-overlay');if(sd&&sd.style.display!=='none'){sd.style.display='none'}
+}});
 // Photo preview helper
 function _previewPhoto(input,previewId){
   var file=input.files[0];if(!file)return;
@@ -1331,7 +1332,7 @@ function _switchWoListTab(tab){
   if(!filtered.length)html='<div class="empty" style="padding:20px;text-align:center;color:var(--text-tertiary)">'+(tab==='active'?'暂无进行中的工单':'暂无历史工单')+'</div>';
   else for(var i=0;i<filtered.length;i++){
     var w=filtered[i],sb=SB_CLASS[w.status]||'sb-pending';
-    html+='<div class="iv-card" onclick="openWoDetail(\''+w.order_no+'\')"><div style="font-size:10px;color:var(--brand);font-family:monospace">'+w.order_no+'</div><div style="font-size:14px;color:var(--text-primary)">'+w.title+'</div><div style="display:flex;gap:4px;align-items:center;margin-top:4px"><span class="status-badge '+sb+'" style="font-size:10px;padding:2px 7px">'+(SM[w.status]||w.status)+'</span><span style="font-size:11px;color:var(--text-tertiary)">'+w.site_name+'</span></div></div>';
+    html+='<div class="iv-card" onclick="openWoDetail('+JSON.stringify(w.order_no)+')"><div style="font-size:10px;color:var(--brand);font-family:monospace">'+esc(w.order_no)+'</div><div style="font-size:14px;color:var(--text-primary)">'+esc(w.title)+'</div><div style="display:flex;gap:4px;align-items:center;margin-top:4px"><span class="status-badge '+sb+'" style="font-size:10px;padding:2px 7px">'+(SM[w.status]||esc(w.status))+'</span><span style="font-size:11px;color:var(--text-tertiary)">'+esc(w.site_name)+'</span></div></div>';
   }
   document.getElementById('wo-list-content').innerHTML=html;
 }
@@ -1386,7 +1387,7 @@ function _renderInspList(){
   else{
     for(var i=0;i<Math.min(filtered.length,30);i++){
       var p=filtered[i],pct=p.total_items?Math.round((p.completed_items||0)/p.total_items*100):0;
-      html+='<div class="iv-card" onclick="openInspItems('+p.id+')"><div style="font-size:14px;font-weight:500;color:var(--text-primary)">'+p.plan_name+'</div><div style="font-size:11px;color:var(--text-tertiary)">'+p.site_name+' · '+(p.completed_items||0)+'/'+(p.total_items||0)+'项 · '+(p.start_date||'').substring(5)+'</div></div>';
+      html+='<div class="iv-card" onclick="openInspItems('+p.id+')"><div style="font-size:14px;font-weight:500;color:var(--text-primary)">'+esc(p.plan_name)+'</div><div style="font-size:11px;color:var(--text-tertiary)">'+esc(p.site_name)+' · '+(p.completed_items||0)+'/'+(p.total_items||0)+'项 · '+(p.start_date||'').substring(5)+'</div></div>';
     }
   }
   document.getElementById('insp-list').innerHTML=html;
@@ -1405,8 +1406,8 @@ async function openInspItems(pid){
   document.getElementById('insp-title').textContent=(plan.site_name||'')+' · 检查项';
   _inspListMode=true;
   var tasks=await af('/inspections/'+pid+'/tasks');inspData[pid]=tasks||[];
-  var html='<div class="iv-card"><div style="font-size:14px;font-weight:500;color:var(--text-primary)">'+plan.plan_name+'</div><div style="font-size:11px;color:var(--text-tertiary)">'+plan.site_name+'</div></div>';
-  if(tasks){for(var i=0;i<tasks.length;i++){var t=tasks[i],done=!!t.result,isAb=t.result==='abnormal';html+='<div class="iv-card" id="ck-item-'+t.id+'" style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0;background:'+(done?(isAb?'var(--danger)':'var(--brand)'):'var(--bg-primary)')+'">'+(done?(isAb?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:10px;height:10px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px"><polyline points="20 6 9 17 4 12"/></svg>'):(i+1))+'</span><div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--text-primary)">'+t.check_item+'</div>'+(t.remark?'<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">备注: '+t.remark+'</div>':'')+'</div>'+(done?('<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;align-items:flex-end"><span style="font-size:11px;white-space:nowrap;color:'+(isAb?'var(--danger)':'var(--brand)')+'">'+(isAb?'异常':'正常')+'</span>'+(isAb?'<button class="btn-sm" style="background:var(--danger-bg);color:var(--danger);font-size:11px;padding:4px 8px" onclick="event.stopPropagation();_createWOFromInspection('+t.id+','+plan.site_id+',\''+t.check_item.replace(/'/g,"\\'")+'\',\''+(plan.site_name||'').replace(/'/g,"\\'")+'\')"><span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>转工单</button>':'')+'</div>'):'<div style="display:flex;gap:4px;flex-shrink:0"><button class="btn-sm" style="background:var(--brand-light);color:var(--brand)" onclick="checkItem('+t.id+',\'normal\',\''+t.check_item.replace(/'/g,"\\'")+'\')">正常</button><button class="btn-sm" style="background:var(--danger-bg);color:var(--danger)" onclick="checkItem('+t.id+',\'abnormal\',\''+t.check_item.replace(/'/g,"\\'")+'\')">异常</button></div>')+'</div>'}
+  var html='<div class="iv-card"><div style="font-size:14px;font-weight:500;color:var(--text-primary)">'+esc(plan.plan_name)+'</div><div style="font-size:11px;color:var(--text-tertiary)">'+esc(plan.site_name)+'</div></div>';
+  if(tasks){for(var i=0;i<tasks.length;i++){var t=tasks[i],done=!!t.result,isAb=t.result==='abnormal';html+='<div class="iv-card" id="ck-item-'+t.id+'" style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0;background:'+(done?(isAb?'var(--danger)':'var(--brand)'):'var(--bg-primary)')+'">'+(done?(isAb?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:10px;height:10px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px"><polyline points="20 6 9 17 4 12"/></svg>'):(i+1))+'</span><div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--text-primary)">'+esc(t.check_item)+'</div>'+(t.remark?'<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">备注: '+esc(t.remark)+'</div>':'')+'</div>'+(done?('<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;align-items:flex-end"><span style="font-size:11px;white-space:nowrap;color:'+(isAb?'var(--danger)':'var(--brand)')+'">'+(isAb?'异常':'正常')+'</span>'+(isAb?'<button class="btn-sm" style="background:var(--danger-bg);color:var(--danger);font-size:11px;padding:4px 8px" onclick="event.stopPropagation();_createWOFromInspection('+t.id+','+plan.site_id+','+JSON.stringify(t.check_item)+','+JSON.stringify(plan.site_name||'')+')"><span class="i i-sm" style="margin-right:2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>转工单</button>':'')+'</div>'):'<div style="display:flex;gap:4px;flex-shrink:0"><button class="btn-sm" style="background:var(--brand-light);color:var(--brand)" onclick="checkItem('+t.id+',\'normal\',\''+t.check_item.replace(/'/g,"\\'")+'\')">正常</button><button class="btn-sm" style="background:var(--danger-bg);color:var(--danger)" onclick="checkItem('+t.id+',\'abnormal\',\''+t.check_item.replace(/'/g,"\\'")+'\')">异常</button></div>')+'</div>'}
   }
   document.getElementById('insp-checklist-body').innerHTML=html;
   // 提示操作指引
@@ -1562,9 +1563,9 @@ function _renderSchemeEditor(label){
     html+='<div style="margin-bottom:4px">';
     for(var i=0;i<_editingItems.length;i++){
       var ei=_editingItems[i];
-      html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--divider);cursor:pointer" onclick="_toggleSchemeItem(\''+ei.check_item.replace(/'/g,"\\'")+'\')">'
+      html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--divider);cursor:pointer" onclick="_toggleSchemeItem('+JSON.stringify(ei.check_item)+')">'
         +'<span style="width:22px;height:22px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;flex-shrink:0">●</span>'
-        +'<span style="flex:1;font-size:14px;color:var(--text-primary)">'+ei.check_item+'</span>'
+        +'<span style="flex:1;font-size:14px;color:var(--text-primary)">'+esc(ei.check_item)+'</span>'
         +'<span style="font-size:13px;color:var(--text-danger);padding:6px 12px;border-radius:4px;background:rgba(239,68,68,0.08);min-width:48px;text-align:center">移除</span></div>';
     }
     html+='</div>';
@@ -1620,7 +1621,7 @@ async function quickCreatePlan(schemeId,siteId){
   var today=new Date();var endDate=new Date(today.getTime()+7*86400000);
   var fmt=function(d){return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0')};
   document.getElementById('new-inspection').classList.add('open');
-  document.getElementById('new-inspection-body').innerHTML='<div class="iv-card"><div style="font-size:14px;font-weight:500;color:var(--text-primary)">快速新建 · '+label+'巡检</div><div style="font-size:12px;color:var(--text-tertiary);margin:4px 0">方案: '+scheme.name+' ('+(scheme.items||[]).length+'项)</div><div class="form-group" style="margin-top:12px"><label>截止日期</label><input type="date" id="ni-end" value="'+fmt(endDate)+'"></div><button class="btn-primary" onclick="submitSchemePlan('+schemeId+','+siteId+')">提交计划</button></div>';
+  document.getElementById('new-inspection-body').innerHTML='<div class="iv-card"><div style="font-size:14px;font-weight:500;color:var(--text-primary)">快速新建 · '+label+'巡检</div><div style="font-size:12px;color:var(--text-tertiary);margin:4px 0">方案: '+esc(scheme.name)+' ('+(scheme.items||[]).length+'项)</div><div class="form-group" style="margin-top:12px"><label>截止日期</label><input type="date" id="ni-end" value="'+fmt(endDate)+'"></div><button class="btn-primary" onclick="submitSchemePlan('+schemeId+','+siteId+')">提交计划</button></div>';
 }
 async function submitSchemePlan(schemeId,siteId){
   var endDate=document.getElementById('ni-end').value;
@@ -1674,8 +1675,8 @@ async function loadNiSchemes(){
   if(!schemes.length){el.innerHTML='<div class="empty" style="padding:10px;font-size:12px">该站点未配置方案</div>';return}
   var html='<div class="form-group"><label>选择巡检方案</label>';
   for(var i=0;i<schemes.length;i++){
-    var scm=schemes[i],label={'daily':'日','weekly':'周','monthly':'月'}[scm.period]||scm.period;
-    html+='<label style="display:flex;align-items:center;justify-content:space-between;padding:10px;margin:4px 0;border:1px solid var(--divider);border-radius:8px;cursor:pointer;transition:background .15s" class="ni-scheme-opt" onclick="selectNiScheme('+scm.id+',this)"><input type="radio" name="ni-scheme" value="'+scm.id+'" data-period="'+scm.period+'" style="display:none"><span style="font-size:14px;font-weight:500;color:var(--text-primary)">'+label+'巡检方案</span><span style="font-size:11px;color:var(--text-tertiary)">'+scm.item_count+'项</span></label>';
+    var scm=schemes[i],label={'daily':'日','weekly':'周','monthly':'月'}[scm.period]||esc(scm.period);
+    html+='<label style="display:flex;align-items:center;justify-content:space-between;padding:10px;margin:4px 0;border:1px solid var(--divider);border-radius:8px;cursor:pointer;transition:background .15s" class="ni-scheme-opt" onclick="selectNiScheme('+scm.id+',this)"><input type="radio" name="ni-scheme" value="'+scm.id+'" data-period="'+esc(scm.period)+'" style="display:none"><span style="font-size:14px;font-weight:500;color:var(--text-primary)">'+label+'巡检方案</span><span style="font-size:11px;color:var(--text-tertiary)">'+scm.item_count+'项</span></label>';
   }
   html+='</div>';el.innerHTML=html;
 }
@@ -1726,8 +1727,8 @@ function filterPartsSites(q){
   var h='';
   for(var i=0;i<Math.min(matches.length,15);i++){
     (function(site){
-      h+='<div style="padding:8px 10px;border-bottom:1px solid var(--border-color);cursor:pointer;font-size:13px;color:var(--text-primary)" onclick="selectPartsSite('+site.id+',\''+site.name+'\')">'
-        +site.name+' <span style="font-size:11px;color:var(--text-tertiary)">'+site.code+'</span></div>';
+      h+='<div style="padding:8px 10px;border-bottom:1px solid var(--border-color);cursor:pointer;font-size:13px;color:var(--text-primary)" onclick="selectPartsSite('+site.id+','+JSON.stringify(site.name)+')">'
+        +esc(site.name)+' <span style="font-size:11px;color:var(--text-tertiary)">'+esc(site.code)+'</span></div>';
     })(matches[i]);
   }
   suggest.innerHTML=h;
@@ -1771,8 +1772,8 @@ function showPartsList(cat){
   for(var i=0;i<filtered.length;i++){
     (function(p){
       var low=p.quantity<=p.min_quantity?' ⚠':'';
-      h+='<div class="parts-opt" style="padding:8px 10px;border-bottom:1px solid var(--border-color);cursor:pointer;font-size:13px;color:var(--text-primary);display:flex;justify-content:space-between" onclick="selectPart(this,\''+p.part_name.replace(/'/g,"\\'")+'\')">'
-        +'<span>'+p.part_name+low+'</span><span style="font-size:11px;color:var(--text-tertiary)">库存:'+p.quantity+'</span></div>';
+      h+='<div class="parts-opt" style="padding:8px 10px;border-bottom:1px solid var(--border-color);cursor:pointer;font-size:13px;color:var(--text-primary);display:flex;justify-content:space-between" onclick="selectPart(this,'+JSON.stringify(p.part_name)+')">'
+        +'<span>'+esc(p.part_name)+low+'</span><span style="font-size:11px;color:var(--text-tertiary)">库存:'+p.quantity+'</span></div>';
     })(filtered[i]);
   }
   list.innerHTML=h;
@@ -1810,11 +1811,11 @@ async function loadMyParts(){
   for(var i=0;i<rows.length;i++){
     var r=rows[i];
     var sc=r.status==='pending'?'#ffa040':r.status==='approved'?'#2ea080':'#ff4760';
-    var stxt=r.status==='pending'?'⏳待审批':r.status==='approved'?'✅已通过('+(r.approver||'')+')':'❌已驳回('+(r.approver||'')+')';
+    var stxt=r.status==='pending'?'⏳待审批':r.status==='approved'?'✅已通过('+esc(r.approver||'')+')':'❌已驳回('+esc(r.approver||'')+')';
     h+='<div class="iv-card" style="border-left:3px solid '+sc+';margin-bottom:6px">'
-      +'<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-primary)"><b>'+(r.part_name||'')+' ×'+r.quantity+'</b><span style="color:'+sc+';font-size:11px">'+stxt+'</span></div>'
-      +'<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">'+(r.request_no||'')+' | '+(r.site_name||'')+' | '+(r.created_at||'').substring(5,16)+'</div>'
-      +(r.approval_comment?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">意见：'+(r.approval_comment||'')+'</div>':'')
+      +'<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-primary)"><b>'+esc(r.part_name||'')+' ×'+r.quantity+'</b><span style="color:'+sc+';font-size:11px">'+stxt+'</span></div>'
+      +'<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">'+esc(r.request_no||'')+' | '+esc(r.site_name||'')+' | '+(r.created_at||'').substring(5,16)+'</div>'
+      +(r.approval_comment?'<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">意见：'+esc(r.approval_comment||'')+'</div>':'')
       +'</div>';
   }
   body.innerHTML=h;

@@ -132,8 +132,8 @@ def get_site_trend(site_id, metric, base, var, min_v=None, max_v=None):
         _site_state[key] = base
     was = _site_state[key]
     drift = random.uniform(-var, var)
-    # 0.5%概率注入异常突变（10倍漂移），用于触发异常检测
-    if random.random() < 0.005:
+    # 0.1%概率注入异常突变（10倍漂移），用于触发异常检测
+    if random.random() < 0.001:
         drift *= 10
     val = round(was + drift, 2)
     if min_v is not None:
@@ -1032,6 +1032,15 @@ def _generate_site_data(site, db, now):
 
 def detect_site_anomalies(db, site_id, site_type, metric, current_value, recorded_at):
     """检测单个站点指标的异常情况：突变、冻结、缺失"""
+    METRIC_CN = {
+        'water_level':'水位','flow':'流量','velocity':'流速','precipitation':'降雨量',
+        'cumulative_rainfall':'累计雨量','soil_moisture':'土壤含水量','soil_temperature':'土壤温度',
+        'evaporation':'蒸发量','temperature':'气温','wind_speed':'风速',
+        'groundwater_level':'地下水位','water_quality':'水质','noise':'噪声',
+        'data_spike':'数据突变','data_freeze':'数据冻结','data_gap':'数据缺失',
+        'device_status':'设备状态'
+    }
+    metric_cn = METRIC_CN.get(metric, metric)
     try:
         # 排除自然波动大的指标（降雨、风速、噪声等属于正常波动）
         EXCLUDE_SPIKE = {'precipitation','cumulative_rainfall','velocity','wind_speed','noise'}
@@ -1050,7 +1059,7 @@ def detect_site_anomalies(db, site_id, site_type, metric, current_value, recorde
             frozen = len(set(round(v, 4) for v in values[:6])) == 1
             if frozen:
                 create_alert_internal(db, site_id, 'data_freeze', latest, 'yellow',
-                    f'数据冻结：{metric}连续6条记录值一致（{latest}），传感器可能故障')
+                    f'数据冻结：{metric_cn}连续6条记录值一致（{latest}），传感器可能故障')
                 return
 
         # 2. 突变检测（排除自然波动指标）
@@ -1067,17 +1076,17 @@ def detect_site_anomalies(db, site_id, site_type, metric, current_value, recorde
             if std < abs(mean) * 0.005:
                 std = abs(mean) * 0.005
             z_score = abs(latest - mean) / std
-            # 要求：变化幅度 > 10% 且 偏离 > 5σ，同时绝对变化值大于指标特定阈值
-            min_abs_change = {'water_level': 0.3, 'flow': 200, 'soil_moisture': 5,
-                              'temperature': 3, 'evaporation': 2, 'groundwater_level': 2,
-                              'water_quality': 0.5}
+            # 要求：变化幅度 > 15% 且 偏离 > 6σ，同时绝对变化值大于指标特定阈值
+            min_abs_change = {'water_level': 0.5, 'flow': 500, 'soil_moisture': 8,
+                              'temperature': 5, 'evaporation': 3, 'groundwater_level': 3,
+                              'water_quality': 1.0}
             abs_change = abs(latest - mean)
-            min_abs = min_abs_change.get(metric, abs(mean) * 0.15)
-            if pct_change > 0.10 and z_score > 5 and abs_change > min_abs:
+            min_abs = min_abs_change.get(metric, abs(mean) * 0.25)
+            if pct_change > 0.15 and z_score > 6 and abs_change > min_abs:
                 direction = '陡增' if latest > mean else '陡降'
-                level = 'red' if z_score > 8 else 'orange'
+                level = 'red' if z_score > 10 else 'orange'
                 create_alert_internal(db, site_id, 'data_spike', latest, level,
-                    f'数据异常{direction}：{metric} {latest:.2f}（均值{mean:.2f}，变化{pct_change*100:.0f}%）')
+                    f'数据异常{direction}：{metric_cn} {latest:.2f}（均值{mean:.2f}，变化{pct_change*100:.0f}%）')
 
         # 3. 数据缺失检测
         if len(timestamps) >= 2:
@@ -1087,7 +1096,7 @@ def detect_site_anomalies(db, site_id, site_type, metric, current_value, recorde
                 gap_min = (t1 - t0).total_seconds() / 60
                 if gap_min > 25:
                     create_alert_internal(db, site_id, 'data_gap', gap_min, 'yellow',
-                        f'数据缺失：{metric}已有{gap_min:.0f}分钟未更新')
+                        f'数据缺失：{metric_cn}已有{gap_min:.0f}分钟未更新')
             except Exception:
                 pass
     except Exception as e:
@@ -1117,6 +1126,9 @@ def generate_sensor_data():
 
         for idx, site in enumerate(sites):
             sid = site['id']
+            # 预设离线站点跳过所有数据生成，保持种子数据一致性
+            if sid in PRESET_OFFLINE:
+                continue
             try:
                 _generate_site_data(site, db, now)
             except Exception as e:
@@ -1193,17 +1205,140 @@ def generate_sensor_data():
             except:
                 pass
 
+def migrate_alerts_messages():
+    """迁移旧告警消息中的英文指标名为中文"""
+    METRIC_EN_CN = {
+        'water_level':'水位','flow':'流量','velocity':'流速','precipitation':'降雨量',
+        'cumulative_rainfall':'累计雨量','soil_moisture':'土壤含水量','soil_temperature':'土壤温度',
+        'evaporation':'蒸发量','temperature':'气温','wind_speed':'风速',
+        'groundwater_level':'地下水位','water_quality':'水质','noise':'噪声',
+        'data_spike':'数据突变','data_freeze':'数据冻结','data_gap':'数据缺失',
+        'device_status':'设备状态'
+    }
+    with get_db() as db:
+        for en, cn in METRIC_EN_CN.items():
+            db.execute("UPDATE alerts SET message=REPLACE(message,?,?) WHERE message LIKE ?",
+                       (en, cn, '%'+en+'%'))
+        db.commit()
+        fixed = db.execute("SELECT changes()").fetchone()[0]
+        if fixed:
+            print(f"[Migrate] 已修正 {fixed} 条告警消息中的英文指标名")
+
+def migrate_alert_flow():
+    """迁移告警表：新增 flow_type / flow_status / tracking 字段"""
+    with get_db() as db:
+        for col_sql in [
+            "ALTER TABLE alerts ADD COLUMN flow_type TEXT DEFAULT 'manual'",
+            "ALTER TABLE alerts ADD COLUMN flow_status TEXT DEFAULT 'pending_review'",
+            "ALTER TABLE alerts ADD COLUMN tracking_count INTEGER DEFAULT 0",
+        ]:
+            try:
+                db.execute(col_sql)
+            except Exception:
+                pass
+        # 已有 alert 分类：仅对尚未设置 flow_type 的告警进行迁移（不覆盖已设定的）
+        db.execute("UPDATE alerts SET flow_type='auto', flow_status='converted', status='acknowledged' WHERE metric IN ('data_gap','device_status') AND status='acknowledged' AND flow_type IS NULL")
+        db.execute("UPDATE alerts SET flow_type='auto', flow_status='pending' WHERE metric IN ('data_gap','device_status') AND status='pending' AND flow_type IS NULL")
+        db.execute("UPDATE alerts SET flow_type='manual', flow_status='pending_review' WHERE flow_type IS NULL")
+        # 已有 related_order_no 的设置 converted
+        db.execute("UPDATE alerts SET flow_status='converted' WHERE related_order_no IS NOT NULL AND related_order_no != ''")
+        db.commit()
+        print("[Migrate] alert_flow 迁移完成: flow_type/flow_status 字段已添加并初始化")
+
+def _auto_convert_alert(db, alert_id, site_id, alert_level, message, metric):
+    """A级告警自动转工单"""
+    now = datetime.now()
+    order_no = f"WO-{now.strftime('%Y%m%d')}-{random.randint(100,999)}"
+    order_level = 'critical' if alert_level == 'red' else ('urgent' if alert_level == 'orange' else 'normal')
+    sla_hours = {'normal': 72, 'urgent': 24, 'critical': 2}.get(order_level, 72)
+    sla_deadline = (now + timedelta(hours=sla_hours)).strftime('%Y-%m-%d %H:%M')
+
+    # 自动派单：根据 site_id 查找负责人
+    site = db.execute("SELECT manager FROM sites WHERE id=?", (site_id,)).fetchone()
+    assignee = site['manager'] if site and site['manager'] else ''
+
+    db.execute("""
+        INSERT INTO work_orders (order_no,site_id,source,event_type,level,title,description,assignee,status,sla_deadline)
+        VALUES (?,?,?,?,?,?,?,?,?,?)
+    """, (
+        order_no, site_id, 'auto', '告警自动转工单',
+        order_level, f"[自动] {message}", message,
+        assignee, 'pending', sla_deadline
+    ))
+    # 更新告警状态
+    db.execute("UPDATE alerts SET flow_status='converted', related_order_no=?, status='acknowledged' WHERE id=?",
+               (order_no, alert_id))
+    # 时间线
+    db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
+               ('alert', alert_id, 'auto_converted', '系统', f'自动转工单 {order_no}'))
+    db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
+               ('order', 0, 'auto_created', '系统', f'告警{alert_id}自动转工单-{order_no}'))
+
 def create_alert_internal(db, site_id, metric, value, level, message):
-    # 检查最近1小时内是否有相同的site+metric告警（含已办结），有则跳过
-    exists = db.execute(
-        "SELECT id FROM alerts WHERE site_id=? AND metric=? AND level=? AND created_at > datetime('now','-60 minutes')",
-        (site_id, metric, level)
+    """创建告警——同站点合并为一条告警（不同异常追加消息），去重同站点同metric"""
+    LEVEL_PRIORITY = {'yellow':0, 'orange':1, 'red':2}
+    # 判断流转类型（A级：data_gap/device_status → 自动转工单；B级：其他 → 人工复核）
+    A_LEVEL_METRICS = {'data_gap', 'device_status'}
+    is_auto = metric in A_LEVEL_METRICS
+    flow_type = 'auto' if is_auto else 'manual'
+    flow_status = 'pending' if is_auto else 'pending_review'
+
+    # 同站点同metric精确去重——计数累加
+    same = db.execute(
+        "SELECT id, tracking_count FROM alerts WHERE site_id=? AND metric=? AND status!='resolved'",
+        (site_id, metric)
     ).fetchone()
-    if not exists:
+    if same:
+        new_tracking = (same['tracking_count'] or 0) + 1
+        db.execute("UPDATE alerts SET tracking_count=?, value=? WHERE id=?",
+                   (new_tracking, value, same['id']))
+        # 同一测项第3次触发 → 自动升级为A级
+        if new_tracking >= 2:
+            db.execute("UPDATE alerts SET flow_type='auto', flow_status='pending' WHERE id=?",
+                       (same['id'],))
+            alert_row = db.execute("SELECT * FROM alerts WHERE id=?", (same['id'],)).fetchone()
+            if alert_row and alert_row['flow_type'] == 'auto' and alert_row['flow_status'] == 'pending':
+                _auto_convert_alert(db, same['id'], site_id, alert_row['level'],
+                                    alert_row['message'], metric)
+        return
+
+    # 检查同站点其他metric的未办结告警（合并到同一条告警）
+    existing = db.execute(
+        "SELECT id, message, level, flow_type, flow_status FROM alerts WHERE site_id=? AND status!='resolved' ORDER BY id DESC LIMIT 1",
+        (site_id,)
+    ).fetchone()
+    if existing:
+        new_level = level
+        if LEVEL_PRIORITY.get(existing['level'], 0) > LEVEL_PRIORITY.get(level, 0):
+            new_level = existing['level']
+        new_message = existing['message'] + ' | ' + message
+        if len(new_message) > 500:
+            new_message = new_message[:250] + ' ... ' + new_message[-240:]
+
+        # 合并后包含A级metric → 整体视为A级
+        merged_flow_type = existing['flow_type']
+        merged_flow_status = existing['flow_status']
+        if is_auto or existing['flow_type'] == 'auto':
+            merged_flow_type = 'auto'
+            merged_flow_status = 'pending'
+
         db.execute(
-            "INSERT INTO alerts (site_id,metric,value,level,message) VALUES (?,?,?,?,?)",
-            (site_id, metric, value, level, message)
+            "UPDATE alerts SET message=?, level=?, value=?, flow_type=?, flow_status=? WHERE id=?",
+            (new_message, new_level, value, merged_flow_type, merged_flow_status, existing['id'])
         )
+
+        # 合并后为A级且原未转工单 → 立即自动转工单
+        if merged_flow_type == 'auto' and existing['flow_status'] in ('pending', 'pending_review'):
+            _auto_convert_alert(db, existing['id'], site_id, new_level, new_message, metric)
+    else:
+        db.execute(
+            "INSERT INTO alerts (site_id,metric,value,level,message,flow_type,flow_status) VALUES (?,?,?,?,?,?,?)",
+            (site_id, metric, value, level, message, flow_type, flow_status)
+        )
+        new_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        # 新创建的A级告警 → 立即自动转工单
+        if is_auto:
+            _auto_convert_alert(db, new_id, site_id, level, message, metric)
 
 # ===================== 登录认证系统 =====================
 
@@ -1483,7 +1618,52 @@ def site_data(site_id):
         ).fetchall()
         return jsonify([dict(r) for r in rows])
 
-@app.route('/api/data/overview')
+@app.route('/api/data/site/<int:site_id>/trend')
+@login_required
+def site_data_trend(site_id):
+    """站点历史数据趋势（用于曲线图），支持按指标和时间范围筛选"""
+    metric = request.args.get('metric', '')
+    hours = request.args.get('hours', 24, type=int)
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+    limit = request.args.get('limit', 2000, type=int)
+    with get_db() as db:
+        q = "SELECT metric, value, unit, recorded_at FROM sensor_data WHERE site_id=?"
+        params = [site_id]
+        if metric:
+            q += " AND metric=?"
+            params.append(metric)
+        if date_from:
+            q += " AND recorded_at>=?"
+            params.append(date_from)
+        elif hours and hours > 0:
+            from datetime import datetime, timedelta
+            cutoff = (datetime.now() - timedelta(hours=hours)).strftime('%Y-%m-%d %H:%M:%S')
+            q += " AND recorded_at>=?"
+            params.append(cutoff)
+        if date_to:
+            q += " AND recorded_at<=?"
+            params.append(date_to)
+        q += " ORDER BY recorded_at ASC LIMIT ?"
+        params.append(limit)
+        rows = db.execute(q, params).fetchall()
+    # 按指标分组
+    grouped = {}
+    for r in rows:
+        m = r['metric']
+        if m not in grouped:
+            grouped[m] = []
+        grouped[m].append({
+            'value': round(r['value'], 2) if r['value'] is not None else None,
+            'unit': r['unit'],
+            'recorded_at': r['recorded_at']
+        })
+    return jsonify({
+        'site_id': site_id,
+        'metrics': list(grouped.keys()),
+        'series': grouped,
+        'total_points': len(rows)
+    })
 @login_required
 def data_overview():
     site_ids = _filter_site_ids()
@@ -1621,6 +1801,74 @@ def undo_acknowledge_alert(alert_id):
         db.commit()
         return jsonify({'success': True})
 
+# === 告警流转（A级自动转 / B级人工复核）===
+
+@app.route('/api/alerts/pending-review', methods=['GET'])
+@login_required
+def get_pending_review_alerts():
+    """获取所有待复核的B级告警及其已等待时间"""
+    site_ids = _filter_site_ids()
+    with get_db() as db:
+        q = """
+            SELECT a.id, a.site_id, a.metric, a.level, a.message, a.created_at,
+                   s.name as site_name, s.code as site_code,
+                   ROUND((julianday('now','localtime') - julianday(a.created_at)) * 24 * 60) as wait_minutes
+            FROM alerts a LEFT JOIN sites s ON a.site_id=s.id
+            WHERE a.flow_type='manual' AND a.flow_status='pending_review'
+        """
+        params = []
+        if site_ids is not None:
+            ph = ','.join('?' * len(site_ids))
+            q += f" AND a.site_id IN ({ph})"
+            params.extend(site_ids)
+        q += " ORDER BY a.created_at ASC"
+        rows = db.execute(q, params).fetchall()
+        return jsonify([dict(r) for r in rows])
+
+@app.route('/api/alerts/<int:alert_id>/confirm-convert', methods=['POST'])
+@login_required
+def confirm_convert_alert(alert_id):
+    """B级告警人工复核确认转工单或关闭"""
+    data = request.json or {}
+    action = data.get('action', 'convert')  # 'convert' 或 'dismiss'
+    operator = data.get('operator', g.current_user.get('real_name', '系统'))
+    with get_db() as db:
+        alert = db.execute("SELECT * FROM alerts WHERE id=?", (alert_id,)).fetchone()
+        if not alert:
+            return jsonify({'error': '告警不存在'}), 404
+        if alert['flow_type'] != 'manual' or alert['flow_status'] != 'pending_review':
+            return jsonify({'error': '该告警已处理，请刷新后重试'}), 400
+        if action == 'dismiss':
+            remark_txt = data.get('remark', '').strip() or '人工复核后关闭'
+            db.execute("UPDATE alerts SET flow_status='dismissed', status='resolved', resolved_at=datetime('now','localtime') WHERE id=?", (alert_id,))
+            db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
+                       ('alert', alert_id, 'dismissed', operator, remark_txt))
+            db.commit()
+            return jsonify({'success': True, 'action': 'dismissed'})
+        else:
+            # 转工单
+            now = datetime.now()
+            order_no = f"WO-{now.strftime('%Y%m%d')}-{random.randint(100,999)}"
+            order_level = 'critical' if alert['level'] == 'red' else ('urgent' if alert['level'] == 'orange' else 'normal')
+            sla_hours = {'normal': 72, 'urgent': 24, 'critical': 2}.get(order_level, 72)
+            sla_deadline = (now + timedelta(hours=sla_hours)).strftime('%Y-%m-%d %H:%M')
+            site = db.execute("SELECT manager FROM sites WHERE id=?", (alert['site_id'],)).fetchone()
+            assignee = data.get('assignee', site['manager'] if site else '')
+            db.execute("""
+                INSERT INTO work_orders (order_no,site_id,source,event_type,level,title,description,assignee,status,sla_deadline)
+                VALUES (?,?,?,?,?,?,?,?,?,?)
+            """, (
+                order_no, alert['site_id'], 'alert_convert', '告警复核转工单',
+                order_level, f"[复核] {alert['message']}", alert['message'],
+                assignee, 'pending', sla_deadline
+            ))
+            db.execute("UPDATE alerts SET flow_status='converted', related_order_no=?, status='acknowledged' WHERE id=?",
+                       (order_no, alert_id))
+            db.execute("INSERT INTO timeline_events (source_type,source_id,event_type,operator,remark) VALUES (?,?,?,?,?)",
+                       ('alert', alert_id, 'manual_converted', operator, f'人工复核转工单 {order_no}'))
+            db.commit()
+            return jsonify({'success': True, 'order_no': order_no})
+
 @app.route('/api/alerts/<int:alert_id>/convert-order', methods=['POST'])
 def convert_alert_to_order(alert_id):
     """告警转工单"""
@@ -1754,7 +2002,11 @@ def alert_statistics():
                 by_status[st] = db.execute("SELECT COUNT(*) as c FROM alerts WHERE status=?",(st,)).fetchone()['c']
         else:
             by_status[status] = total
-        return jsonify({'total':total, 'by_level':by_level, 'by_status':by_status})
+        # 待复核告警统计
+        pending_review = db.execute("SELECT COUNT(*) as c FROM alerts WHERE flow_type='manual' AND flow_status='pending_review'").fetchone()['c']
+        auto_converted = db.execute("SELECT COUNT(*) as c FROM alerts WHERE flow_type='auto' AND flow_status='converted'").fetchone()['c']
+        return jsonify({'total':total, 'by_level':by_level, 'by_status':by_status,
+                        'pending_review': pending_review, 'auto_converted': auto_converted})
 
 # --- Work Orders ---
 @app.route('/api/workorders')
@@ -2486,9 +2738,18 @@ def data_arrival_summary():
                 'by_metric': [dict(r) for r in rows]
             })
         total = db.execute("SELECT AVG(arrival_rate) as avg FROM data_arrival WHERE date=?", (date,)).fetchone()
+        rows = db.execute("""
+            SELECT da.metric,
+                COUNT(da.site_id) as site_count,
+                ROUND(AVG(da.arrival_rate),1) as avg_rate,
+                0 as below_threshold
+            FROM data_arrival da
+            WHERE da.date=?
+            GROUP BY da.metric
+        """, (date,)).fetchall()
         return jsonify({
             'total_avg': round(total['avg'],1) if total and total['avg'] else 0,
-            'by_metric': [dict(r) for r in rows] if has_data > 0 else []
+            'by_metric': [dict(r) for r in rows]
         })
 
 # --- Hotline ---
@@ -3106,6 +3367,14 @@ def api_users():
         })
     return jsonify(users)
 
+@app.route('/api/assignees')
+@login_required
+def api_assignees():
+    """返回可用负责人名单（用于B级预警复核转工单下拉选择）"""
+    with get_db() as db:
+        rows = db.execute("SELECT id, real_name, role FROM users ORDER BY real_name").fetchall()
+    return jsonify([{'id': r['id'], 'name': r['real_name'], 'role': r['role']} for r in rows])
+
 @app.route('/api/users/<int:uid>/sites', methods=['GET'])
 @login_required
 def api_user_sites(uid):
@@ -3483,7 +3752,12 @@ if __name__ == '__main__':
     seed_maintenance()
     seed_maintenance_templates()
     seed_users()
-    backfill_history(72)
+    migrate_alerts_messages()
+    migrate_alert_flow()
+    if os.environ.get('SKIP_BACKFILL') == '1':
+        print("[Seed] 跳过数据回填（E2E测试模式）")
+    else:
+        backfill_history(72)
     # 生成初始数据（让趋势跟踪生效）
     for _ in range(6):
         try:
@@ -3492,21 +3766,25 @@ if __name__ == '__main__':
         except Exception as e:
             print(f'[Seed] 初始数据生成跳过: {e}')
     # 预置少量固定离线站点（在初始数据生成之后执行，确保不被覆盖）
-    try:
-        with get_db() as db:
-            for sid in [5, 108, 193]:
-                db.execute("UPDATE device_shadows SET status='offline', last_data_time=NULL WHERE site_id=?", (sid,))
-                site = db.execute("SELECT name FROM sites WHERE id=?", (sid,)).fetchone()
-                if site:
-                    print(f"[Seed] 预设离线站点: {site['name']} (id={sid})")
+    # 环境变量 SKIP_PRESET_OFFLINE=1 可跳过（用于 E2E 测试使用自定义种子数据）
+    if os.environ.get('SKIP_PRESET_OFFLINE') == '1':
+        print("[Seed] 跳过预设离线站点（E2E测试模式）")
+    else:
+        try:
+            with get_db() as db:
+                for sid in [5, 108, 193]:
+                    db.execute("UPDATE device_shadows SET status='offline', last_data_time=NULL WHERE site_id=?", (sid,))
+                    site = db.execute("SELECT name FROM sites WHERE id=?", (sid,)).fetchone()
+                    if site:
+                        print(f"[Seed] 预设离线站点: {site['name']} (id={sid})")
                     # 生成离线告警
                     devs = db.execute("SELECT device_name, device_code FROM device_shadows WHERE site_id=?", (sid,)).fetchall()
                     for dev in devs:
                         create_alert_internal(db, sid, 'device_status', 0, 'yellow',
                             f"设备离线: {dev['device_name']} ({dev['device_code']}) · {site['name']}")
             db.commit()
-    except Exception as e:
-        print(f"[Seed] 预设离线站点跳过: {e}")
+        except Exception as e:
+            print(f"[Seed] 预设离线站点跳过: {e}")
     # 清理过量的已办结告警（只保留最近1天的）
     try:
         with get_db() as db:
@@ -3517,8 +3795,12 @@ if __name__ == '__main__':
                 print(f"[Cleanup] 清理过量已办结告警: 删除前{total}条，保留最近1天记录")
     except Exception as e:
         print(f"[Cleanup] 告警清理跳过: {e}")
-    # 每30秒自动生成数据
-    scheduler.add_job(generate_sensor_data, 'interval', seconds=60, id='simulator')
+    # 每30秒自动生成数据（SKIP_SIMULATOR=1 可关闭，用于E2E测试）
+    if os.environ.get('SKIP_SIMULATOR') != '1':
+        scheduler.add_job(generate_sensor_data, 'interval', seconds=60, id='simulator')
+        print("[Server] 数据仿真器已启动（每60秒），SKIP_SIMULATOR=1 可关闭")
+    else:
+        print("[Server] 数据仿真器已跳过（E2E测试模式）")
     # 每30分钟更新天气
     scheduler.add_job(fetch_real_weather, 'interval', minutes=30, id='weather_updater')
     print("[Server] 水利运维智慧运营平台 启动成功!")
